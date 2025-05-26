@@ -1,19 +1,31 @@
 #include <Arduino.h>
 #include <pio_usb.h>
+#include <usb_midi_host.h>
 #include <EZ_USB_MIDI_HOST.h>
 
 #include "defs.hpp"
 #include "usbh.hpp"
 
-// /* MIDI IN MESSAGE REPORTING */
+
+
 namespace Usbh {
 
 MidiHost midiHost;
 
+USING_NAMESPACE_MIDI
+USING_NAMESPACE_EZ_USB_MIDI_HOST
+struct mycustomsettings : public MidiHostSettingsDefault
+{
+    static const unsigned MidiRxBufsize = 512;
+};
+RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
+
 void MidiHost::begin(){
-    
     usbhMIDI.begin(&USBHost, 1, onMIDIconnect, onMIDIdisconnect);
+    pio_cfg = PIO_USB_DEFAULT_CONFIG;
     pio_cfg.pin_dp = PIN_USB_HOST_DP;
+
+    ready = false;
 
     USBHost.configure_pio_usb(1, &pio_cfg);
 }

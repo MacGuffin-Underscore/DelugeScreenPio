@@ -2,16 +2,12 @@
 
 #include <Arduino.h>
 #include <pio_usb.h>
+#include <usb_midi_host.h>
 #include <EZ_USB_MIDI_HOST.h>
 
 #include "defs.hpp"
-USING_NAMESPACE_MIDI
-USING_NAMESPACE_EZ_USB_MIDI_HOST
-struct mycustomsettings : public MidiHostSettingsDefault
-{
-    static const unsigned MidiRxBufsize = 512;
-};
 
+USING_NAMESPACE_MIDI
 namespace Usbh {
 
 class MidiHost{
@@ -21,18 +17,16 @@ public:
     void begin();
     void tick();
 
-    /* MIDI handling*/
     Adafruit_USBH_Host USBHost;
-    RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
 
     static void sendNextNote();
     static void printAddrAndCable();
     static void listConnectedDevices();
 
 private:
-    bool ready = false;
-    pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
-
+    bool ready;
+    pio_usb_configuration_t pio_cfg ;
+    /* MIDI handling*/
     static void onMidiError(int8_t errCode);
     static void onNoteOff(Channel channel, byte note, byte velocity);
     static void onNoteOn(Channel channel, byte note, byte velocity);

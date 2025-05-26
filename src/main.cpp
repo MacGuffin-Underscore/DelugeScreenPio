@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <pio_usb.h>
-#include <EZ_USB_MIDI_HOST.h>
 
 #include "display.hpp"
 #include "usbh.hpp"
