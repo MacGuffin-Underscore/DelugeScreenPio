@@ -19,6 +19,7 @@ static void blinkLED(void)
 
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH:LOW); 
+    Serial.printf("fuck");
 }
 
 
@@ -43,16 +44,16 @@ void setup()
     }
 
     // init all classes
-    //Usbh::midiHost.begin();
+    Usbh::midiHost.begin();
     Display::driver.begin();
     Buttons::begin();
 }
 
 void loop() {
     Display::driver.tick();
-    //Usbh::midiHost.tick();
+    Usbh::midiHost.tick();
     Buttons::tick();
-
+    
     // Do other non-USB host processing
     blinkLED();
 }
