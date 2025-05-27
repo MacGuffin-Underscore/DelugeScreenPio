@@ -18,6 +18,7 @@ public:
     void tick();
 
     Adafruit_USBH_Host USBHost;
+    // RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
 
     static void sendNextNote();
     static void printAddrAndCable();

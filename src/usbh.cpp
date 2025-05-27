@@ -16,22 +16,34 @@ USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
 struct mycustomsettings : public MidiHostSettingsDefault
 {
-    static const unsigned MidiRxBufsize = 512;
+
 };
+
 RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
 
 void MidiHost::begin(){
-    usbhMIDI.begin(&USBHost, 1, onMIDIconnect, onMIDIdisconnect);
+    ready = false;
+
     pio_cfg = PIO_USB_DEFAULT_CONFIG;
     pio_cfg.pin_dp = PIN_USB_HOST_DP;
 
-    ready = false;
-
     USBHost.configure_pio_usb(1, &pio_cfg);
+
+    usbhMIDI.begin(&USBHost, 1, onMIDIconnect, onMIDIdisconnect); // this is breaking shit
+
+    ready = true;
 }
 
 void MidiHost::tick(){
+    // Handle USB Stack processing
+    USBHost.task();
+    // Handle any incoming data; triggers MIDI IN callbacks
+    usbhMIDI.readAll();
+    // Do other processing that might generate pending MIDI SER data
+    //sendNextNote();
 
+    // Tell the USB Host to send as much pending MIDI SER data as possible
+    usbhMIDI.writeFlushAll();
 }
 
 void MidiHost::sendNextNote()
