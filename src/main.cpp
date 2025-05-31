@@ -19,7 +19,6 @@ static void blinkLED(void)
 
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH:LOW); 
-    Serial.printf("fuck");
 }
 
 
@@ -41,7 +40,7 @@ void setup()
         digitalWrite(LED_BUILTIN, HIGH); // lock high so we know it's fucked
         while(1) delay(1);
     }
-
+    SER.print("Initializing classes");
     // init all classes
     Usbh::midiHost.begin();
     Display::driver.begin();

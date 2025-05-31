@@ -1,5 +1,5 @@
 #pragma once
-#define SER Serial1
+#define SER Serial
 
 // Board-related
 #define BUTTON_A_PIN 9

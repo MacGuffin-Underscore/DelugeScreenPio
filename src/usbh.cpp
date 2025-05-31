@@ -2,17 +2,26 @@
 #include <pio_usb.h>
 #include <usb_midi_host.h>
 #include <EZ_USB_MIDI_HOST.h>
+#include <string>
 
 #include "defs.hpp"
 #include "display.hpp"
 #include "usbh.hpp"
 #include "buttons.hpp"
 
+using namespace Display;
 
 
 namespace Usbh {
 
 MidiHost midiHost;
+
+const uint8_t sysex_get_oled[6] = {0xf0, 0x7d, 0x02, 0x00, 0x01, 0xf7};
+const uint8_t sysex_get_7seg[6] = {0xf0, 0x7d, 0x02, 0x01, 0x00, 0xf7};
+const uint8_t sysex_get_display[6] = {0xf0, 0x7d, 0x02, 0x00, 0x02, 0xf7};
+const uint8_t sysex_get_display_force[6] = {0xf0, 0x7d, 0x02, 0x00, 0x03, 0xf7};
+const uint8_t sysex_get_debug[6] = {0xf0, 0x7d, 0x03, 0x00, 0x01, 0xf7};
+const uint8_t sysex_flip_screen[6] = {0xf0, 0x7d, 0x02, 0x00, 0x04, 0xf7};
 
 USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
@@ -42,26 +51,25 @@ void MidiHost::tick(){
     // Handle any incoming data; triggers MIDI IN callbacks
     usbhMIDI.readAll();
 
-
-
-    // Do other processing that might generate pending MIDI SER data
-    //sendNextNote();
-
+    // Check for button presses
     if (Buttons::buttonA){
         Buttons::buttonA = false; // debounce
-
-
+        requestFlip();
+        driver.announce("button A pressed");
     }
-    if (Buttons::buttonB){
-        Buttons::buttonB = false; // debounce
+    // else if (Buttons::buttonB){
+    //     Buttons::buttonB = false; // debounce
         
+    //     driver.announce("button B pressed");
+    // }
+    // // Command screen to flip
+    // else if (Buttons::buttonC){
+    //     Buttons::buttonC = false; // debounce
 
-    }
-    // Command screen to flip
-    if (Buttons::buttonC){
-        Buttons::buttonC = false; // debounce
-    }
-    
+    //     driver.announce("button C pressed");
+    // }
+    requestImage();
+
     // TODO: add CC controls for encoders
 
     // Tell the USB Host to send as much pending MIDI SER data as possible
@@ -70,30 +78,41 @@ void MidiHost::tick(){
 
 /* This is code that should probably be removed if not used in your project */
 #pragma region Project Specific
-// This is left over from the test code, it wont be used in the final
-void sendNextNote()
-{
-    static uint8_t firstNote = 0x5b; // Mackie Control rewind
-    static uint8_t lastNote = 0x5f; // Mackie Control stop
-    static uint8_t offNote = lastNote;
-    static uint8_t onNote = firstNote;
-    const uint32_t intervalMs = 1000;
-    static uint32_t startMs = 0;
-    if (millis() - startMs < intervalMs)
-        return; // not enough time
-    startMs += intervalMs;
+
+void MidiHost::requestImage() {
+  const uint32_t interval_ms = 1000;
+  static uint32_t start_ms = 0;
+
+  if (millis() - start_ms < interval_ms) {
+    return;
+  }
+  start_ms += interval_ms;
+
+  for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
+        auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
+        if (intf == nullptr)
+            continue; // not connected
+        intf->sendSysEx(6, sysex_get_display, true);
+  }
+}
+
+void MidiHost::requestFlip() {
+    const uint32_t interval_ms = 100;
+  static uint32_t start_ms = 0;
+
+    if (millis() - start_ms < interval_ms) {
+        return;
+    }
+    start_ms += interval_ms;
+
+    uint8_t cable = 0;
+    Serial1.println("Flip requested.");
     for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
         if (intf == nullptr)
             continue; // not connected
-        intf->sendNoteOn(offNote, 0, 1);
-        intf->sendNoteOn(onNote, 0x7f, 1);
-        
+        intf->sendSysEx(6, sysex_flip_screen, true);
     }
-    if (++offNote > lastNote)
-        offNote = firstNote;
-    if (++onNote > lastNote)
-        onNote = firstNote;
 }
 
 #pragma endregion
@@ -161,30 +180,40 @@ void onSysEx(byte * array, unsigned size)
     SER.printf("SysEx:\r\n");
     unsigned multipleOf8 = size/8;
     unsigned remOf8 = size % 8;
+    unsigned remIdx = 0;
     for (unsigned idx=0; idx < multipleOf8; idx++) {
         for (unsigned jdx = 0; jdx < 8; jdx++) {
-            SER.printf("%02x ", *array++);
+            SER.printf("%02x ", array[idx+jdx]);
+            remIdx++;
         }
         SER.printf("\r\n");
     }
     for (unsigned idx = 0; idx < remOf8; idx++) {
-        SER.printf("%02x ", *array++);
+        SER.printf("%02x ", array[remIdx+idx]);
     }
     SER.printf("\r\n");
 
     using namespace Display;
     // use incoming data to decide what to do
     // if message is sysex oled
-    if(1 == 1){
-        driver.drawOLED(array, size);
+    SER.printf("%02x == %02x", array[2], uint8_t{0x02});
+    if(size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40}){
+        if (array[4] == uint8_t{0x01}) {
+            driver.announce("Drawing OLED\r\n");
+            driver.drawOLED(array, size);
+    }   else if (array[4] == uint8_t{0x02}) {
+            driver.announce("Drawing OLED delta\r\n");
+            driver.drawOLEDDelta(array, size);
     }
-    // if message is sysex oledDelta
-    else if (2 == 2){
-        driver.drawOLEDDelta(array, size);
     }
     // if message is sysex seg7
-    else if (3 == 3){
-        driver.draw7seg(array, size);
+    else if (size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41}){
+        if (array[4] == uint8_t{0x00}){
+            driver.draw7seg(array, size);
+        }
+    }
+    else{
+        SER.print("IDK what this is.\r\n");
     }
     // if message is control
 }
@@ -363,6 +392,8 @@ void listConnectedDevices()
 void MidiHost::onMIDIconnect(uint8_t devAddr, uint8_t nInCables, uint8_t nOutCables)
 {
     SER.printf("MIDI device at address %u has %u IN cables and %u SER cables\r\n", devAddr, nInCables, nOutCables);
+    driver.announce("connected");
+
     registerMidiInCallbacks(devAddr);
     listConnectedDevices();
 }
@@ -370,6 +401,8 @@ void MidiHost::onMIDIconnect(uint8_t devAddr, uint8_t nInCables, uint8_t nOutCab
 void MidiHost::onMIDIdisconnect(uint8_t devAddr)
 {
     SER.printf("MIDI device at address %u unplugged\r\n", devAddr);
+    driver.announce("disconnected");
+
     unregisterMidiInCallbacks(devAddr);
     // Note that listConnectedDevices() will still list the just unplugged
     //  device as connected until this function returns
