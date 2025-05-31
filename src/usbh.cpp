@@ -4,7 +4,9 @@
 #include <EZ_USB_MIDI_HOST.h>
 
 #include "defs.hpp"
+#include "display.hpp"
 #include "usbh.hpp"
+#include "buttons.hpp"
 
 
 
@@ -39,14 +41,37 @@ void MidiHost::tick(){
     USBHost.task();
     // Handle any incoming data; triggers MIDI IN callbacks
     usbhMIDI.readAll();
+
+
+
     // Do other processing that might generate pending MIDI SER data
     //sendNextNote();
+
+    if (Buttons::buttonA){
+        Buttons::buttonA = false; // debounce
+
+
+    }
+    if (Buttons::buttonB){
+        Buttons::buttonB = false; // debounce
+        
+
+    }
+    // Command screen to flip
+    if (Buttons::buttonC){
+        Buttons::buttonC = false; // debounce
+    }
+    
+    // TODO: add CC controls for encoders
 
     // Tell the USB Host to send as much pending MIDI SER data as possible
     usbhMIDI.writeFlushAll();
 }
 
-void MidiHost::sendNextNote()
+/* This is code that should probably be removed if not used in your project */
+#pragma region Project Specific
+// This is left over from the test code, it wont be used in the final
+void sendNextNote()
 {
     static uint8_t firstNote = 0x5b; // Mackie Control rewind
     static uint8_t lastNote = 0x5f; // Mackie Control stop
@@ -71,64 +96,66 @@ void MidiHost::sendNextNote()
         onNote = firstNote;
 }
 
-#pragma region MIDI
-void MidiHost::onMidiError(int8_t errCode)
+#pragma endregion
+
+#pragma region MIDI Callbacks
+void onMidiError(int8_t errCode)
 {
     SER.printf("MIDI Errors: %s %s %s\r\n", (errCode & (1UL << ErrorParse)) ? "Parse":"",
         (errCode & (1UL << ErrorActiveSensingTimeout)) ? "Active Sensing Timeout" : "",
         (errCode & (1UL << WarningSplitSysEx)) ? "Split SysEx":"");
 }
 
-void MidiHost::printAddrAndCable()
+void printAddrAndCable()
 {
     uint8_t midiDevAddr, cable;
     usbhMIDI.getCurrentReadDevAndCable(midiDevAddr, cable);
     SER.printf("[%02d,%02d] ",midiDevAddr, cable);
 }
 
-void MidiHost::onNoteOff(Channel channel, byte note, byte velocity)
+void onNoteOff(Channel channel, byte note, byte velocity)
 {
     printAddrAndCable();
     SER.printf("C%u: Note off#%u v=%u\r\n", channel, note, velocity);
 }
 
-void MidiHost::onNoteOn(Channel channel, byte note, byte velocity)
+void onNoteOn(Channel channel, byte note, byte velocity)
 {
     printAddrAndCable();
     SER.printf("C%u: Note on#%u v=%u\r\n", channel, note, velocity);
 }
 
-void MidiHost::onPolyphonicAftertouch(Channel channel, byte note, byte amount)
+void onPolyphonicAftertouch(Channel channel, byte note, byte amount)
 {
     printAddrAndCable();
     SER.printf("C%u: PAT#%u=%u\r\n", channel, note, amount);
 }
 
-void MidiHost::onControlChange(Channel channel, byte controller, byte value)
+void onControlChange(Channel channel, byte controller, byte value)
 {
     printAddrAndCable();
     SER.printf("C%u: CC#%u=%u\r\n", channel, controller, value);
 }
 
-void MidiHost::onProgramChange(Channel channel, byte program)
+void onProgramChange(Channel channel, byte program)
 {
     printAddrAndCable();
     SER.printf("C%u: Prog=%u\r\n", channel, program);
 }
 
-void MidiHost::onAftertouch(Channel channel, byte value)
+void onAftertouch(Channel channel, byte value)
 {
     printAddrAndCable();
     SER.printf("C%u: AT=%u\r\n", channel, value);
 }
 
-void MidiHost::onPitchBend(Channel channel, int value)
+void onPitchBend(Channel channel, int value)
 {
     printAddrAndCable();
     SER.printf("C%u: PB=%d\r\n", channel, value);
 }
 
-void MidiHost::onSysEx(byte * array, unsigned size)
+void onSysEx(byte * array, unsigned size)
 {
     printAddrAndCable();
     SER.printf("SysEx:\r\n");
@@ -144,9 +171,25 @@ void MidiHost::onSysEx(byte * array, unsigned size)
         SER.printf("%02x ", *array++);
     }
     SER.printf("\r\n");
+
+    using namespace Display;
+    // use incoming data to decide what to do
+    // if message is sysex oled
+    if(1 == 1){
+        driver.drawOLED(array, size);
+    }
+    // if message is sysex oledDelta
+    else if (2 == 2){
+        driver.drawOLEDDelta(array, size);
+    }
+    // if message is sysex seg7
+    else if (3 == 3){
+        driver.draw7seg(array, size);
+    }
+    // if message is control
 }
 
-void MidiHost::onSMPTEqf(byte data)
+void onSMPTEqf(byte data)
 {
     printAddrAndCable();
     uint8_t type = (data >> 4) & 0xF;
@@ -169,67 +212,67 @@ void MidiHost::onSMPTEqf(byte data)
     }
 }
 
-void MidiHost::onSongPosition(unsigned beats)
+void onSongPosition(unsigned beats)
 {
     printAddrAndCable();
     SER.printf("SongP=%u\r\n", beats);
 }
 
-void MidiHost::onSongSelect(byte songnumber)
+void onSongSelect(byte songnumber)
 {
     printAddrAndCable();
     SER.printf("SongS#%u\r\n", songnumber);
 }
 
-void MidiHost::onTuneRequest()
+void onTuneRequest()
 {
     printAddrAndCable();
     SER.printf("Tune\r\n");
 }
 
-void MidiHost::onMidiClock()
+void onMidiClock()
 {
     printAddrAndCable();
     SER.printf("Clock\r\n");
 }
 
-void MidiHost::onMidiStart()
+void onMidiStart()
 {
     printAddrAndCable();
     SER.printf("Start\r\n");
 }
 
-void MidiHost::onMidiContinue()
+void onMidiContinue()
 {
     printAddrAndCable();
     SER.printf("Cont\r\n");
 }
 
-void MidiHost::onMidiStop()
+void onMidiStop()
 {
     printAddrAndCable();
     SER.printf("Stop\r\n");
 }
 
-void MidiHost::onActiveSense()
+void onActiveSense()
 {
     printAddrAndCable();
     SER.printf("ASen\r\n");
 }
 
-void MidiHost::onSystemReset()
+void onSystemReset()
 {
     printAddrAndCable();
     SER.printf("SysRst\r\n");
 }
 
-void MidiHost::onMidiTick()
+void onMidiTick()
 {
     printAddrAndCable();
     SER.printf("Tick\r\n");
 }
 
-void MidiHost::onMidiInWriteFail(uint8_t devAddr, uint8_t cable, bool fifoOverflow)
+void onMidiInWriteFail(uint8_t devAddr, uint8_t cable, bool fifoOverflow)
 {
     if (fifoOverflow)
         SER.printf("[%02d,%02d] MIDI IN FIFO overflow\r\n", devAddr, cable);
@@ -237,7 +280,7 @@ void MidiHost::onMidiInWriteFail(uint8_t devAddr, uint8_t cable, bool fifoOverfl
         SER.printf("[%02d,%02d] MIDI IN FIFO error\r\n", devAddr, cable);
 }
 
-void MidiHost::registerMidiInCallbacks(uint8_t midiDevAddr)
+void registerMidiInCallbacks(uint8_t midiDevAddr)
 {
     uint8_t ncables = usbhMIDI.getNumInCables(midiDevAddr);
     for (uint8_t cable = 0; cable < ncables; cable++) {
@@ -270,7 +313,7 @@ void MidiHost::registerMidiInCallbacks(uint8_t midiDevAddr)
     dev->setOnMidiInWriteFail(onMidiInWriteFail);
 }
 
-void MidiHost::unregisterMidiInCallbacks(uint8_t midiDevAddr)
+void unregisterMidiInCallbacks(uint8_t midiDevAddr)
 {
     uint8_t ncables = usbhMIDI.getNumInCables(midiDevAddr);
     for (uint8_t cable = 0; cable < ncables; cable++) {
@@ -306,7 +349,7 @@ void MidiHost::unregisterMidiInCallbacks(uint8_t midiDevAddr)
 }
 
 /* CONNECTION MANAGEMENT */
-void MidiHost::listConnectedDevices()
+void listConnectedDevices()
 {
     SER.printf("Dev  VID:PID  Product Name[Manufacter]{serial string}\r\n");
     for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
@@ -334,4 +377,4 @@ void MidiHost::onMIDIdisconnect(uint8_t devAddr)
 }
 #pragma endregion
 
-}
+} // namespace Usbh

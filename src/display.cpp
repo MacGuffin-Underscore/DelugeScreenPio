@@ -98,7 +98,7 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
   drawOLEDData(oledData, OLED_DATA_LEN);
 }
 
-void Driver::draw7seg(uint8_t *digits, size_t length, uint8_t dots) {
+void Driver::draw7seg(uint8_t *data, size_t length) {
   if (!ready) return;
   // @todo Write 7segment rendering code
   showing_remote = true;

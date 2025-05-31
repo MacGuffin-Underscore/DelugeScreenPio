@@ -20,7 +20,7 @@ public:
 
   void drawOLED(uint8_t *data, size_t length);
   void drawOLEDDelta(uint8_t *data, size_t length);
-  void draw7seg(uint8_t *digits, size_t length, uint8_t dots);
+  void draw7seg(uint8_t *data, size_t length);
 private:
   // TFT_eSPI tft = TFT_eSPI();
   Adafruit_SH1107 oled_disp = Adafruit_SH1107(64, 128, &Wire);
