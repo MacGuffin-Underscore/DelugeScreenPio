@@ -12,6 +12,7 @@ namespace Display {
 class Driver {
 public:
   Driver() {};
+  bool isOled;
 
   void begin();
   void tick();
@@ -20,7 +21,7 @@ public:
 
   void drawOLED(uint8_t *data, size_t length);
   void drawOLEDDelta(uint8_t *data, size_t length);
-  void draw7seg(uint8_t *data, size_t length);
+  void draw7seg(uint8_t *array);
 private:
   // TFT_eSPI tft = TFT_eSPI();
   Adafruit_SH1107 oled_disp = Adafruit_SH1107(64, 128, &Wire);
@@ -30,6 +31,8 @@ private:
 
   uint8_t oledData[OLED_DATA_LEN];
   void drawOLEDData(uint8_t *data, size_t data_len);
+  void drawOledStatic();
+  void drawOledBanner();
 };
 
 extern Driver driver;

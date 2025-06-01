@@ -12,7 +12,6 @@ void Driver::begin() {
   delay(250);
   oled_disp.begin(OLED_DISP_ADDR, true);
   oled_disp.setRotation(1);
-
   oled_disp.setCursor(0, 0);
   oled_disp.setTextColor(SH110X_WHITE);
 
@@ -21,6 +20,7 @@ void Driver::begin() {
   seg7_disp.print("DLGE");
   seg7_disp.writeDisplay();
 
+  isOled = false;
   ready = true;
   announce("Loading...");
 }
@@ -33,11 +33,13 @@ void Driver::tick() {
   }
   start_ms += interval_ms;
 
+  drawOledBanner();
+  
   oled_disp.display();
 }
 
 void Driver::announce(const char *message) {
-  Serial1.println(message);
+  SER.println(message);
   if (!ready) {
     return;
   }
@@ -54,7 +56,7 @@ void Driver::drawOLED(uint8_t *data, size_t length) {
   size_t packed_len = length - 6;
 
   uint8_t unpacked[OLED_DATA_LEN];
-  SER.print("Unpacking");
+  //SER.print("Unpacking");
   int unpacked_len = unpack_7to8_rle(unpacked, OLED_DATA_LEN, packed, packed_len);
 
   // Serial1.printf("reset %d as %u\n", unpacked_len, packed_len);
@@ -88,21 +90,43 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
   }
 
   memcpy(oledData+(8*first), unpacked, 8*len);
-
   // SER.println("Completed memcpy.");
 
   drawOLEDData(oledData, OLED_DATA_LEN);
 }
 
-void Driver::draw7seg(uint8_t *data, size_t length) {
+void Driver::draw7seg(uint8_t *array) {
   if (!ready) return;
+  uint8_t subArray[] = {array[7],array[8],array[9],array[10]};
+  uint8_t dots = array[6];
+  // draw static display
+  if (isOled){
+    isOled = false;
+    drawOledStatic();
+  }
+
+  bool dot;
+  for (unsigned idx = 0; idx < 4; idx++)
+  {
+    seg7_disp.writeDigitRaw(idx, subArray[idx]);
+    seg7_disp.writeDigitAscii(idx, 32, dots & (1 << idx) != 0);
+  }
+  seg7_disp.clear();
+  seg7_disp.writeDisplay();
   // @todo Write 7segment rendering code
-  showing_remote = true;
 }
 
 void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
   if (!ready) return;
   
+  //draw static display
+  if (!isOled) {
+    isOled = true;
+    seg7_disp.clear();
+    seg7_disp.print("DLGE");
+    seg7_disp.writeDisplay();
+  }
+
   oled_disp.startWrite();
   oled_disp.fillRect(OFFX, OFFY, OFFX+128, OFFY+48, SH110X_BLACK);
 
@@ -127,7 +151,16 @@ void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
   }
   oled_disp.endWrite();
   showing_remote = true;
-  SER.print("attempting to display");
+}
+
+void Driver::drawOledStatic(){
+  // TODO: create static/moving background for when OLED is not in use
+}
+
+void Driver::drawOledBanner(){
+  // TODO: write battery level indicator
+  // TODO: write isWorking indicator
+  // TODO: write whatever else I want on the banner
 }
 
 } // namespace Display

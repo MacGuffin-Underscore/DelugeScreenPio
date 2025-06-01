@@ -27,7 +27,7 @@ USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
 struct mycustomsettings : public MidiHostSettingsDefault
 {
-
+    static const unsigned MidiRxBufsize = 256;
 };
 
 RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
@@ -48,8 +48,12 @@ void MidiHost::begin(){
 void MidiHost::tick(){
     // Handle USB Stack processing
     USBHost.task();
+
     // Handle any incoming data; triggers MIDI IN callbacks
     usbhMIDI.readAll();
+
+    // Tell the USB Host to send as much pending MIDI SER data as possible
+    usbhMIDI.writeFlushAll();
 
     // Check for button presses
     if (Buttons::buttonA){
@@ -57,36 +61,38 @@ void MidiHost::tick(){
         requestFlip();
         driver.announce("button A pressed");
     }
-    // else if (Buttons::buttonB){
-    //     Buttons::buttonB = false; // debounce
+    else if (Buttons::buttonB){
+        Buttons::buttonB = false; // debounce
         
-    //     driver.announce("button B pressed");
-    // }
-    // // Command screen to flip
-    // else if (Buttons::buttonC){
-    //     Buttons::buttonC = false; // debounce
+        driver.announce("button B pressed");
+    }
+    // Command screen to flip
+    else if (Buttons::buttonC){
+        Buttons::buttonC = false; // debounce
 
-    //     driver.announce("button C pressed");
-    // }
-    requestImage();
-
+        driver.announce("button C pressed");
+    }
+    using namespace Display;
+    if (!driver.isOled){
+        requestImage();
+    }
+    
     // TODO: add CC controls for encoders
 
-    // Tell the USB Host to send as much pending MIDI SER data as possible
-    usbhMIDI.writeFlushAll();
 }
 
 /* This is code that should probably be removed if not used in your project */
 #pragma region Project Specific
 
 void MidiHost::requestImage() {
-  const uint32_t interval_ms = 1000;
-  static uint32_t start_ms = 0;
+    // slow the fuck down please
+    const uint32_t interval_ms = 100;
+    static uint32_t start_ms = 0;
 
-  if (millis() - start_ms < interval_ms) {
-    return;
-  }
-  start_ms += interval_ms;
+    if (millis() - start_ms < interval_ms) {
+        return;
+    }
+    start_ms += interval_ms;
 
   for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
@@ -176,44 +182,46 @@ void onPitchBend(Channel channel, int value)
 
 void onSysEx(byte * array, unsigned size)
 {
-    printAddrAndCable();
-    SER.printf("SysEx:\r\n");
-    unsigned multipleOf8 = size/8;
-    unsigned remOf8 = size % 8;
-    unsigned remIdx = 0;
-    for (unsigned idx=0; idx < multipleOf8; idx++) {
-        for (unsigned jdx = 0; jdx < 8; jdx++) {
-            SER.printf("%02x ", array[idx+jdx]);
-            remIdx++;
-        }
-        SER.printf("\r\n");
-    }
-    for (unsigned idx = 0; idx < remOf8; idx++) {
-        SER.printf("%02x ", array[remIdx+idx]);
-    }
-    SER.printf("\r\n");
+
+
+    // printAddrAndCable();
+    // SER.printf("SysEx:\r\n");
+    // unsigned multipleOf8 = size/8;
+    // unsigned remOf8 = size % 8;
+    // unsigned remIdx = 0;
+    // for (unsigned idx=0; idx < multipleOf8; idx++) {
+    //     for (unsigned jdx = 0; jdx < 8; jdx++) {
+    //         SER.printf("%02x ", array[(idx*8)+jdx]);
+    //         remIdx++;
+    //     }
+    //     SER.printf("\r\n");
+    // }
+    // for (unsigned idx = 0; idx < remOf8; idx++) {
+    //     SER.printf("%02x ", array[remIdx+idx]);
+    // }
+    // SER.printf("\r\n");
 
     using namespace Display;
     // use incoming data to decide what to do
     // if message is sysex oled
-    SER.printf("%02x == %02x", array[2], uint8_t{0x02});
-    if(size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40}){
+    if (size <= 5){return;}
+    if (size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41}){
+        if (array[4] == uint8_t{0x00}){
+            SER.print("Drawing SEG7\r\n");
+            driver.draw7seg(array);
+        }
+    }
+    else if(size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40} && array[size-1] == uint8_t{0xf7}){
         if (array[4] == uint8_t{0x01}) {
-            driver.announce("Drawing OLED\r\n");
+            SER.print("Drawing OLED\r\n");
             driver.drawOLED(array, size);
     }   else if (array[4] == uint8_t{0x02}) {
-            driver.announce("Drawing OLED delta\r\n");
+            SER.print("Drawing OLED delta\r\n");
             driver.drawOLEDDelta(array, size);
     }
     }
-    // if message is sysex seg7
-    else if (size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41}){
-        if (array[4] == uint8_t{0x00}){
-            driver.draw7seg(array, size);
-        }
-    }
     else{
-        SER.print("IDK what this is.\r\n");
+        SER.print("Non-screen SYSEX MSG.\r\n");
     }
     // if message is control
 }

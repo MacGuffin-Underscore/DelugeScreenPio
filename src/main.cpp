@@ -30,7 +30,9 @@ void setup()
 
     while(!SER);   // wait for serial port
     pinMode(LED_BUILTIN, OUTPUT);
-    
+    pinMode(18, OUTPUT);
+    digitalWrite(18, HIGH);
+
     // Check for CPU frequency, must be multiple of 120Mhz for bit-banging USB
     uint32_t cpu_hz = clock_get_hz(clk_sys);
     if ( cpu_hz != 120000000UL && cpu_hz != 240000000UL ) {
@@ -40,7 +42,8 @@ void setup()
         digitalWrite(LED_BUILTIN, HIGH); // lock high so we know it's fucked
         while(1) delay(1);
     }
-    SER.print("Initializing classes");
+    SER.print("Initializing...");
+    delay(2000);
     // init all classes
     Usbh::midiHost.begin();
     Display::driver.begin();
