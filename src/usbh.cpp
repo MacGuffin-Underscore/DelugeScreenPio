@@ -86,7 +86,7 @@ void MidiHost::tick(){
 
 void MidiHost::requestImage() {
     // slow the fuck down please
-    const uint32_t interval_ms = 100;
+    const uint32_t interval_ms = 250;
     static uint32_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms) {

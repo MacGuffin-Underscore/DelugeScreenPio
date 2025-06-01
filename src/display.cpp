@@ -1,10 +1,24 @@
 #include "defs.hpp"
 #include "display.hpp"
 #include "rle.hpp"
+#include <bits/stdc++.h>
+
+using namespace std;
+// dict of dlg -> standard
+std::map<int, int> seg7Dict = {
+  { 0 , 6 },
+  { 1 , 5 },
+  { 2 , 4 },
+  { 3 , 3 },
+  { 4 , 2 },
+  { 5 , 1 },
+  { 6 , 0 }
+};
 
 namespace Display {
 
 Driver driver;
+
 
 void Driver::begin() {
   memchr(oledData, 0, OLED_DATA_LEN);
@@ -104,14 +118,19 @@ void Driver::draw7seg(uint8_t *array) {
     isOled = false;
     drawOledStatic();
   }
+  seg7_disp.clear();
 
   bool dot;
+  uint8_t digit;
   for (unsigned idx = 0; idx < 4; idx++)
   {
-    seg7_disp.writeDigitRaw(idx, subArray[idx]);
-    seg7_disp.writeDigitAscii(idx, 32, dots & (1 << idx) != 0);
+    for (unsigned jdx = 0; jdx < 7; jdx++)
+    {
+      digit |= (subArray[idx] & (1 << jdx)) ? (1 << seg7Dict[jdx]) : 0;
+    }
+    digit |= (dots & (1 << idx)) ? (1 << 7) : 0;
+    seg7_disp.writeDigitRaw(idx+1, digit);
   }
-  seg7_disp.clear();
   seg7_disp.writeDisplay();
   // @todo Write 7segment rendering code
 }
