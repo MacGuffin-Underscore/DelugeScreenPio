@@ -6,7 +6,7 @@ Still a WIP, so features such as MIDI CC encoders, more button functionality, st
 
 ## Bill of Materials
 For the minimal version, you only need the Feather, OLED, and headers to connect them.  Everything else is optional.
-| Part | Price | qty | required |
+| Part | Price | qty | Required |
 | --------------------------------------------------------------------------- | ------ | --- | --- |
 | [Adafruit Feather RP2040 USBA Host](https://www.adafruit.com/product/5723)  | $17.50 |   1 |   Y |
 | [Adafruit FeatherWing 128x64 OLED](https://www.adafruit.com/product/4650)   | $14.95 |   1 |   Y |
