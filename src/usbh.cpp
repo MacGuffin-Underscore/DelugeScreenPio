@@ -210,8 +210,6 @@ void onSysEx(byte * array, unsigned size)
     SER.printf("\r\n");
 
     // use incoming data to decide what to do
-    // f0 denotes start of sysex
-    // f7 denotes end of sysex
     if (size < 5){return;}// ||  (array[size-1] != uint8_t{0xf7} && array[size-1] != uint8_t{0xf0})){return;}
     if (array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41} && array[4] == uint8_t{0x00}){
         driver.draw7seg(array, size);

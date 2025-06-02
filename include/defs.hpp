@@ -6,7 +6,7 @@
 #define BUTTON_B_PIN 6
 #define BUTTON_C_PIN 5
 
-#define BATT_CTRL 0x36
+#define BATT_CTRL_ADDR 0x36
 #define OLED_DISP_ADDR 0x3c
 #define SEG7_DISP_ADDR 0x70
 
