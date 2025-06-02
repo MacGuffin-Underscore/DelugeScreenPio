@@ -27,7 +27,9 @@ USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
 struct mycustomsettings : public MidiHostSettingsDefault
 {
-    static const unsigned MidiRxBufsize = 256;
+    static const unsigned SysExMaxSize = 512; // for MIDI Library
+    static const unsigned MidiRxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
+    static const unsigned MidiTxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
 };
 
 RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
@@ -59,7 +61,15 @@ void MidiHost::tick(){
     if (Buttons::buttonA){
         Buttons::buttonA = false; // debounce
         requestFlip();
-        driver.announce("button A pressed");
+        driver.announce("Flipping display");
+        SER.print("now printing: ");
+        if (driver.isOled) {
+            SER.print("7 segment\r\n"); // it is flipping so opposite is true
+        }
+        else {
+            SER.print("OLED\r\n");
+        }
+        SER.print(!driver.isOled);
     }
     else if (Buttons::buttonB){
         Buttons::buttonB = false; // debounce
@@ -72,21 +82,19 @@ void MidiHost::tick(){
 
         driver.announce("button C pressed");
     }
-    using namespace Display;
-    if (!driver.isOled){
-        requestImage();
-    }
+
+    requestImage();
     
     // TODO: add CC controls for encoders
-
+    
 }
 
 /* This is code that should probably be removed if not used in your project */
 #pragma region Project Specific
 
 void MidiHost::requestImage() {
-    // slow the fuck down please
-    const uint32_t interval_ms = 250;
+    //slow the fuck down please
+    const uint32_t interval_ms = 100;
     static uint32_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms) {
@@ -104,7 +112,7 @@ void MidiHost::requestImage() {
 
 void MidiHost::requestFlip() {
     const uint32_t interval_ms = 100;
-  static uint32_t start_ms = 0;
+    static uint32_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms) {
         return;
@@ -184,39 +192,34 @@ void onSysEx(byte * array, unsigned size)
 {
 
 
-    // printAddrAndCable();
-    // SER.printf("SysEx:\r\n");
-    // unsigned multipleOf8 = size/8;
-    // unsigned remOf8 = size % 8;
-    // unsigned remIdx = 0;
-    // for (unsigned idx=0; idx < multipleOf8; idx++) {
-    //     for (unsigned jdx = 0; jdx < 8; jdx++) {
-    //         SER.printf("%02x ", array[(idx*8)+jdx]);
-    //         remIdx++;
-    //     }
-    //     SER.printf("\r\n");
-    // }
-    // for (unsigned idx = 0; idx < remOf8; idx++) {
-    //     SER.printf("%02x ", array[remIdx+idx]);
-    // }
-    // SER.printf("\r\n");
-
-    using namespace Display;
-    // use incoming data to decide what to do
-    // if message is sysex oled
-    if (size <= 5){return;}
-    if (size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41}){
-        if (array[4] == uint8_t{0x00}){
-            SER.print("Drawing SEG7\r\n");
-            driver.draw7seg(array);
+    printAddrAndCable();
+    SER.printf("SysEx:\r\n");
+    unsigned multipleOf8 = size/8;
+    unsigned remOf8 = size % 8;
+    unsigned remIdx = 0;
+    for (unsigned idx=0; idx < multipleOf8; idx++) {
+        for (unsigned jdx = 0; jdx < 8; jdx++) {
+            SER.printf("%02x ", array[(idx*8)+jdx]);
+            remIdx++;
         }
+        SER.printf("\r\n");
     }
-    else if(size >= 5 && array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40} && array[size-1] == uint8_t{0xf7}){
+    for (unsigned idx = 0; idx < remOf8; idx++) {
+        SER.printf("%02x ", array[remIdx+idx]);
+    }
+    SER.printf("\r\n");
+
+    // use incoming data to decide what to do
+    // f0 denotes start of sysex
+    // f7 denotes end of sysex
+    if (size < 5){return;}// ||  (array[size-1] != uint8_t{0xf7} && array[size-1] != uint8_t{0xf0})){return;}
+    if (array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41} && array[4] == uint8_t{0x00}){
+        driver.draw7seg(array, size);
+    }
+    else if(array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40}){
         if (array[4] == uint8_t{0x01}) {
-            SER.print("Drawing OLED\r\n");
             driver.drawOLED(array, size);
     }   else if (array[4] == uint8_t{0x02}) {
-            SER.print("Drawing OLED delta\r\n");
             driver.drawOLEDDelta(array, size);
     }
     }
@@ -224,6 +227,7 @@ void onSysEx(byte * array, unsigned size)
         SER.print("Non-screen SYSEX MSG.\r\n");
     }
     // if message is control
+    // TODO: add this, later...
 }
 
 void onSMPTEqf(byte data)

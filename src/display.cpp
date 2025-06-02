@@ -65,19 +65,18 @@ void Driver::announce(const char *message) {
 }
 
 void Driver::drawOLED(uint8_t *data, size_t length) {
-
   uint8_t *packed = data + 6;
   size_t packed_len = length - 6;
 
   uint8_t unpacked[OLED_DATA_LEN];
-  //SER.print("Unpacking");
   int unpacked_len = unpack_7to8_rle(unpacked, OLED_DATA_LEN, packed, packed_len);
 
   // Serial1.printf("reset %d as %u\n", unpacked_len, packed_len);
 
   if (unpacked_len < 0) {
     SER.printf("Hit exception, %d\n", unpacked_len);
-    while (1) {};
+    return;
+    //while (1) {};
   }
 
   if (unpacked_len == OLED_DATA_LEN) {
@@ -100,19 +99,23 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
 
   if (unpacked_len < 0) {
     SER.printf("Hit exception, %d\n", unpacked_len);
-    while (1) {};
+    return;
+    //while (1) {};
   }
 
   memcpy(oledData+(8*first), unpacked, 8*len);
-  // SER.println("Completed memcpy.");
 
   drawOLEDData(oledData, OLED_DATA_LEN);
 }
 
-void Driver::draw7seg(uint8_t *array) {
+void Driver::draw7seg(uint8_t *data, size_t length) {
   if (!ready) return;
-  uint8_t subArray[] = {array[7],array[8],array[9],array[10]};
-  uint8_t dots = array[6];
+  if (data == last_seg7) return;
+
+  SER.print("Drawing SEG7\r\n");
+
+  uint8_t subArray[] = {data[7],data[8],data[9],data[10]};
+  uint8_t dots = data[6];
   // draw static display
   if (isOled){
     isOled = false;
@@ -132,7 +135,7 @@ void Driver::draw7seg(uint8_t *array) {
     seg7_disp.writeDigitRaw(idx+1, digit);
   }
   seg7_disp.writeDisplay();
-  // @todo Write 7segment rendering code
+  last_seg7 = data;
 }
 
 void Driver::drawOLEDData(uint8_t *data, size_t data_len) {

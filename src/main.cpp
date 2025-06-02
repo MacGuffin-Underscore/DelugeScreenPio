@@ -26,7 +26,7 @@ static void blinkLED(void)
 void setup()
 {
     SER.begin(115200);
-    set_sys_clock_hz(120000000UL, true); // 120Mhz for bit-banging USB
+    set_sys_clock_hz(240000000UL, true); // 120Mhz for bit-banging USB
 
     while(!SER);   // wait for serial port
     pinMode(LED_BUILTIN, OUTPUT);
@@ -45,15 +45,15 @@ void setup()
     SER.print("Initializing...");
     delay(2000);
     // init all classes
+    Buttons::begin();
     Usbh::midiHost.begin();
     Display::driver.begin();
-    Buttons::begin();
 }
 
 void loop() {
+    Buttons::tick();
     Display::driver.tick();
     Usbh::midiHost.tick();
-    Buttons::tick();
     
     blinkLED(); 
 }

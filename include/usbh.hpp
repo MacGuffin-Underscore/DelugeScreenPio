@@ -21,6 +21,7 @@ public:
 
 private:
     bool ready;
+
     pio_usb_configuration_t pio_cfg ;
     void requestFlip();
     void requestImage();

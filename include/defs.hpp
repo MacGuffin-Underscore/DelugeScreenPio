@@ -27,6 +27,7 @@
 
 // Display-related
 #define OLED_DATA_LEN 6*128
+#define SEG7_DATA_LEN 128
 #define OFFX 0
 #define OFFY 15
 
