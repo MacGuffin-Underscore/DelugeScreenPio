@@ -18,4 +18,5 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 | [Adafruit I2C Quad Encoder](https://www.adafruit.com/product/2886)          |  $7.50 |   2 |   N |
 | [Encoders With Button]()                                                    |  $1.00 |   8 |   N |
 | [Knobs]()                                                                   |  $0.50 |   8 |   N |
+| [LiPo Battery]()                                                            | $10.00 |   1 |   N |
 
