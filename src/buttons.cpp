@@ -1,4 +1,9 @@
 #include "buttons.hpp"
+#include "display.hpp"
+#include "usbh.hpp"
+
+using namespace Display;
+using namespace Usbh;
 
 namespace Buttons {
 
@@ -24,6 +29,32 @@ void tick() {
   if (buttonA_db.pressed()) buttonA = true;
   if (buttonB_db.pressed()) buttonB = true;
   if (buttonC_db.pressed()) buttonC = true;
+
+      // Check for button presses
+    if (buttonA){
+        buttonA = false; // debounce
+        midiHost.requestFlip();
+        driver.announce("Flipping display");
+        SER.print("now printing: ");
+        if (driver.isOled) {
+            SER.print("7 segment\r\n"); // it is flipping so opposite is true
+        }
+        else {
+            SER.print("OLED\r\n");
+        }
+        SER.print(!driver.isOled);
+    }
+    else if (buttonB){
+        buttonB = false; // debounce
+        
+        driver.announce("button B pressed");
+    }
+    // Command screen to flip
+    else if (buttonC){
+        buttonC = false; // debounce
+
+        driver.announce("button C pressed");
+    }
 }
 
 } // namespace Buttons

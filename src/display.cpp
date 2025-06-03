@@ -40,7 +40,7 @@ void Driver::begin() {
 }
 
 void Driver::tick() {
-  const uint32_t interval_ms = 100;
+  const uint32_t interval_ms = 50;
   static uint32_t start_ms = 0;
   if (millis() - start_ms < interval_ms) {
     return;
@@ -58,10 +58,29 @@ void Driver::announce(const char *message) {
     return;
   }
 
-  oled_disp.fillRect(0, 48, 127, OFFY, SH110X_BLACK);
-  oled_disp.setCursor(0, 48);
+  oled_disp.fillRect(0, 2, 127, OFFY, SH110X_BLACK);
+  oled_disp.setCursor(0, 2);
   oled_disp.setTextColor(SH110X_WHITE);
   oled_disp.print(message);
+}
+
+void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
+  // use incoming data to decide what to do
+  // ||  (array[size-1] != uint8_t{0xf7} && array[size-1] != uint8_t{0xf0})){return;}
+  if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
+      driver.draw7seg(data, length);
+  }
+  else if(data[3] == uint8_t{0x40}){
+    if (data[4] == uint8_t{0x01}) {
+      drawOLED(data, length);
+    }   
+    else if (data[4] == uint8_t{0x02}) {
+      drawOLEDDelta(data, length);
+    }
+  }
+  else{
+    SER.print("Non-screen SYSEX MSG.\r\n");
+  }
 }
 
 void Driver::drawOLED(uint8_t *data, size_t length) {

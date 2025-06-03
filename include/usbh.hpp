@@ -13,17 +13,18 @@ namespace Usbh {
 class MidiHost{
 public:
     MidiHost(){};
+    Adafruit_USBH_Host USBHost;
 
     void begin();
     void tick();
 
-    Adafruit_USBH_Host USBHost;
+    void requestFlip();
 
 private:
     bool ready;
 
     pio_usb_configuration_t pio_cfg ;
-    void requestFlip();
+    
     void requestImage();
     static void onMIDIconnect(uint8_t devAddr, uint8_t nInCables, uint8_t nOutCables);
     static void onMIDIdisconnect(uint8_t devAddr);

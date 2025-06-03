@@ -11,17 +11,16 @@
 
 using namespace Display;
 
-
-namespace Usbh {
-
-MidiHost midiHost;
-
 const uint8_t sysex_get_oled[6] = {0xf0, 0x7d, 0x02, 0x00, 0x01, 0xf7};
 const uint8_t sysex_get_7seg[6] = {0xf0, 0x7d, 0x02, 0x01, 0x00, 0xf7};
 const uint8_t sysex_get_display[6] = {0xf0, 0x7d, 0x02, 0x00, 0x02, 0xf7};
 const uint8_t sysex_get_display_force[6] = {0xf0, 0x7d, 0x02, 0x00, 0x03, 0xf7};
 const uint8_t sysex_get_debug[6] = {0xf0, 0x7d, 0x03, 0x00, 0x01, 0xf7};
 const uint8_t sysex_flip_screen[6] = {0xf0, 0x7d, 0x02, 0x00, 0x04, 0xf7};
+
+namespace Usbh {
+
+MidiHost midiHost;
 
 USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
@@ -54,39 +53,12 @@ void MidiHost::tick(){
     // Handle any incoming data; triggers MIDI IN callbacks
     usbhMIDI.readAll();
 
+    requestImage();
+
     // Tell the USB Host to send as much pending MIDI SER data as possible
     usbhMIDI.writeFlushAll();
 
-    // Check for button presses
-    if (Buttons::buttonA){
-        Buttons::buttonA = false; // debounce
-        requestFlip();
-        driver.announce("Flipping display");
-        SER.print("now printing: ");
-        if (driver.isOled) {
-            SER.print("7 segment\r\n"); // it is flipping so opposite is true
-        }
-        else {
-            SER.print("OLED\r\n");
-        }
-        SER.print(!driver.isOled);
-    }
-    else if (Buttons::buttonB){
-        Buttons::buttonB = false; // debounce
-        
-        driver.announce("button B pressed");
-    }
-    // Command screen to flip
-    else if (Buttons::buttonC){
-        Buttons::buttonC = false; // debounce
-
-        driver.announce("button C pressed");
-    }
-
-    requestImage();
-    
     // TODO: add CC controls for encoders
-    
 }
 
 /* This is code that should probably be removed if not used in your project */
@@ -209,20 +181,9 @@ void onSysEx(byte * array, unsigned size)
     }
     SER.printf("\r\n");
 
-    // use incoming data to decide what to do
-    if (size < 5){return;}// ||  (array[size-1] != uint8_t{0xf7} && array[size-1] != uint8_t{0xf0})){return;}
-    if (array[2] == uint8_t{0x02} && array[3] == uint8_t{0x41} && array[4] == uint8_t{0x00}){
-        driver.draw7seg(array, size);
-    }
-    else if(array[2] == uint8_t{0x02} && array[3] == uint8_t{0x40}){
-        if (array[4] == uint8_t{0x01}) {
-            driver.drawOLED(array, size);
-    }   else if (array[4] == uint8_t{0x02}) {
-            driver.drawOLEDDelta(array, size);
-    }
-    }
-    else{
-        SER.print("Non-screen SYSEX MSG.\r\n");
+    // send over to display if it is a screen
+    if (size >= 5 && array[2] == uint8_t{0x02}){
+        driver.handleScreenSysexMessage(array, size);
     }
     // if message is control
     // TODO: add this, later...

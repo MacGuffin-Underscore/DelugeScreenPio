@@ -1,5 +1,5 @@
 #pragma once
-#define SER Serial
+#define SER Serial1
 
 // Board-related
 #define BUTTON_A_PIN 9
@@ -29,7 +29,7 @@
 #define OLED_DATA_LEN 6*128
 #define SEG7_DATA_LEN 128
 #define OFFX 0
-#define OFFY 15
+#define OFFY 16
 
 // Other
 #define BLINK_RATE 500
