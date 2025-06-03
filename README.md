@@ -27,7 +27,7 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 **** WARNING: This battery's connections are backwards for adafruit boards, if you buy this one you will have to switch the red and black wires in the JST connector or it will fry your board.  Always check polarity before plugging in.
 
 ## Known Bugs
-Code is still freezing up after a time. It may be leaking memory somewhere.  I am tracking it down now and hopefully will have this bug fixed before anyone builds it :p
+Code is still freezing up after a time. Seems to be a problem with EZ_USB_MIDI_HOST library with serial output.  Serial2 seems to be stable enough, though I don't have a debug probe so I will be testing on serial still.
 
 ## Planned Features
 - 7 Segment display support
