@@ -9,6 +9,7 @@
 #include "usbh.hpp"
 #include "buttons.hpp"
 
+
 using namespace Display;
 
 const uint8_t sysex_get_oled[6] = {0xf0, 0x7d, 0x02, 0x00, 0x01, 0xf7};
@@ -26,7 +27,7 @@ USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
 struct mycustomsettings : public MidiHostSettingsDefault
 {
-    static const unsigned SysExMaxSize = 512; // for MIDI Library
+    static const unsigned SysExMaxSize = 450; // for MIDI Library
     static const unsigned MidiRxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
     static const unsigned MidiTxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
 };
@@ -35,6 +36,7 @@ RPPICOMIDI_EZ_USB_MIDI_HOST_INSTANCE(usbhMIDI, mycustomsettings)
 
 void MidiHost::begin(){
     ready = false;
+    openMsg = false;
 
     pio_cfg = PIO_USB_DEFAULT_CONFIG;
     pio_cfg.pin_dp = PIN_USB_HOST_DP;
@@ -53,12 +55,13 @@ void MidiHost::tick(){
     // Handle any incoming data; triggers MIDI IN callbacks
     usbhMIDI.readAll();
 
+    // Update image from deluge
     requestImage();
+
+    // TODO: add CC controls for encoders
 
     // Tell the USB Host to send as much pending MIDI SER data as possible
     usbhMIDI.writeFlushAll();
-
-    // TODO: add CC controls for encoders
 }
 
 /* This is code that should probably be removed if not used in your project */
@@ -66,10 +69,10 @@ void MidiHost::tick(){
 
 void MidiHost::requestImage() {
     //slow the fuck down please
-    const uint32_t interval_ms = 100;
+    const uint32_t interval_ms = 1000;
     static uint32_t start_ms = 0;
 
-    if (millis() - start_ms < interval_ms) {
+    if (millis() - start_ms < interval_ms || openMsg) {
         return;
     }
     start_ms += interval_ms;
@@ -83,7 +86,7 @@ void MidiHost::requestImage() {
 }
 
 void MidiHost::requestFlip() {
-    const uint32_t interval_ms = 100;
+    const uint32_t interval_ms = 500;
     static uint32_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms) {
@@ -162,8 +165,8 @@ void onPitchBend(Channel channel, int value)
 
 void onSysEx(byte * array, unsigned size)
 {
-
-
+    midiHost.openMsg = true;
+    // Print message:
     printAddrAndCable();
     SER.printf("SysEx:\r\n");
     unsigned multipleOf8 = size/8;
@@ -187,6 +190,7 @@ void onSysEx(byte * array, unsigned size)
     }
     // if message is control
     // TODO: add this, later...
+    midiHost.openMsg = false;
 }
 
 void onSMPTEqf(byte data)

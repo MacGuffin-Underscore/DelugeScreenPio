@@ -27,16 +27,16 @@ public:
 private:
   Adafruit_SH1107 oled_disp = Adafruit_SH1107(64, 128, &Wire);
   Adafruit_7segment seg7_disp = Adafruit_7segment();
-  
+
   bool ready = false;
   bool showing_remote = false;
-  uint8_t * last_seg7;
-  uint8_t * last_oled;
+  uint8_t * last_screen;
   
   uint8_t oledData[OLED_DATA_LEN];
   void drawOLEDData(uint8_t *data, size_t data_len);
-  void drawOledStatic();
   void drawOledBanner();
+  void drawOledStatic();
+  void drawSeg7Static();
 };
 
 extern Driver driver;

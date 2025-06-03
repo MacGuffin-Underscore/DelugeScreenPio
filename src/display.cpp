@@ -1,7 +1,8 @@
+#include <bits/stdc++.h>
+
 #include "defs.hpp"
 #include "display.hpp"
 #include "rle.hpp"
-#include <bits/stdc++.h>
 
 using namespace std;
 // dict of dlg -> standard
@@ -40,20 +41,21 @@ void Driver::begin() {
 }
 
 void Driver::tick() {
-  const uint32_t interval_ms = 50;
+  const uint32_t interval_ms = 10;
   static uint32_t start_ms = 0;
   if (millis() - start_ms < interval_ms) {
     return;
   }
   start_ms += interval_ms;
 
-  drawOledBanner();
-  
   oled_disp.display();
+
+  // TODO: clear announce
+
+  // TODO: statusImage
 }
 
 void Driver::announce(const char *message) {
-  SER.println(message);
   if (!ready) {
     return;
   }
@@ -66,7 +68,11 @@ void Driver::announce(const char *message) {
 
 void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
   // use incoming data to decide what to do
-  // ||  (array[size-1] != uint8_t{0xf7} && array[size-1] != uint8_t{0xf0})){return;}
+  // if (data == last_screen) {
+  //   SER.print("repeated screen");
+  //   return;
+  // }
+
   if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
       driver.draw7seg(data, length);
   }
@@ -80,7 +86,9 @@ void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
   }
   else{
     SER.print("Non-screen SYSEX MSG.\r\n");
+    return;
   }
+  //last_screen = data;
 }
 
 void Driver::drawOLED(uint8_t *data, size_t length) {
@@ -89,7 +97,6 @@ void Driver::drawOLED(uint8_t *data, size_t length) {
 
   uint8_t unpacked[OLED_DATA_LEN];
   int unpacked_len = unpack_7to8_rle(unpacked, OLED_DATA_LEN, packed, packed_len);
-
   // Serial1.printf("reset %d as %u\n", unpacked_len, packed_len);
 
   if (unpacked_len < 0) {
@@ -114,7 +121,6 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
 
   uint8_t unpacked[OLED_DATA_LEN];
   int unpacked_len = unpack_7to8_rle(unpacked, OLED_DATA_LEN, packed, packed_len);
-  // SER.printf("first %u, len %u, delta size %d as %u\n", first, len, unpacked_len, packed_len);
 
   if (unpacked_len < 0) {
     SER.printf("Hit exception, %d\n", unpacked_len);
@@ -129,7 +135,6 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
 
 void Driver::draw7seg(uint8_t *data, size_t length) {
   if (!ready) return;
-  if (data == last_seg7) return;
 
   SER.print("Drawing SEG7\r\n");
 
@@ -154,7 +159,6 @@ void Driver::draw7seg(uint8_t *data, size_t length) {
     seg7_disp.writeDigitRaw(idx+1, digit);
   }
   seg7_disp.writeDisplay();
-  last_seg7 = data;
 }
 
 void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
@@ -202,6 +206,10 @@ void Driver::drawOledBanner(){
   // TODO: write battery level indicator
   // TODO: write isWorking indicator
   // TODO: write whatever else I want on the banner
+}
+
+void Driver::drawSeg7Static(){
+
 }
 
 } // namespace Display

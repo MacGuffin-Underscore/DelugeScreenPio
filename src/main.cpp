@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
 #include <pio_usb.h>
+#include <malloc.h>
 
-#include "display.hpp"
-#include "usbh.hpp"
+#include "battery.hpp"
 #include "buttons.hpp"
 #include "defs.hpp"
+#include "display.hpp"
+#include "usbh.hpp"
 
 static void blinkLED(void)
 {
@@ -20,7 +22,6 @@ static void blinkLED(void)
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH:LOW); 
 }
-
 
 /* APPLICATION STARTS HERE */
 void setup()
@@ -44,16 +45,19 @@ void setup()
     }
     SER.print("Initializing...");
     delay(2000);
+
     // init all classes
+    Battery::status.begin();
     Buttons::begin();
     Usbh::midiHost.begin();
     Display::driver.begin();
 }
 
 void loop() {
+    Battery::status.tick();
     Buttons::tick();
     Display::driver.tick();
     Usbh::midiHost.tick();
-    
+
     blinkLED(); 
 }

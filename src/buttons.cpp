@@ -42,12 +42,13 @@ void tick() {
         else {
             SER.print("OLED\r\n");
         }
-        SER.print(!driver.isOled);
     }
     else if (buttonB){
         buttonB = false; // debounce
         
         driver.announce("button B pressed");
+
+        midiHost.requestImage();
     }
     // Command screen to flip
     else if (buttonC){
