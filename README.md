@@ -36,7 +36,3 @@ Code is still freezing up after a time. Seems to be a problem with EZ_USB_MIDI_H
 - Battery indicator
 
 If you have ideas, please suggest away!
-
-## Give me money
-(I really don't need it)
-https://ko-fi.com/macguffin
