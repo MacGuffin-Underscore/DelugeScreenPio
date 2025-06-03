@@ -16,7 +16,24 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 | [STEMMA QT Cable](https://www.adafruit.com/product/4399)                    |  $0.95 |   4 |   N |
 | [Adafruit 0.56" 7-Segment Display](https://www.adafruit.com/product/1002)   | $10.95 |   1 |   N |
 | [Adafruit I2C Quad Encoder](https://www.adafruit.com/product/2886)          |  $7.50 |   2 |   N |
-| [Encoders With Button]()                                                    |  $1.00 |   8 |   N |
-| [Knobs]()                                                                   |  $0.50 |   8 |   N |
-| [LiPo Battery]()                                                            | $10.00 |   1 |   N |
+| [Encoders With Button**](https://www.amazon.com//dp/B07MW7D4FD)             |  $1.00 |   8 |   N |
+| [1900H Davies Knobs***](https://www.amazon.com/dp/B07DLKQGLN)               |  $0.50 |   8 |   N |
+| [3v7 LiPo Battery****](https://www.amazon.com/dp/B0D3LMBJC5)                | $20.00 |   1 |   N |
 
+** This is a 10 pack, so you will only need one of these for the 8 encoders. Of course, if you add more encoder boards that means more encoders. Naturally.
+
+*** Any knobs work (depending on which encoders you bought), and you can find these cheaper elsewhere
+
+**** WARNING: This battery's connections are backwards for adafruit boards, if you buy this one you will have to switch the red and black wires in the JST connector or it will fry your board.  Always check polarity before plugging in.
+
+## Planned Features
+- 7 Segment display support
+- Encoder MIDI CC support
+- Static screens for the unused display
+- Battery indicator
+
+If you have ideas, please suggest away!
+
+## Give me money
+(I really don't need it)
+https://ko-fi.com/macguffin
