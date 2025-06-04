@@ -29,17 +29,14 @@ private:
   Adafruit_7segment seg7_disp = Adafruit_7segment();
 
   int lastAnnounce = 0;
-  bool bobDown = false;
-  bool idle_oled = true;
-  bool idle_seg7 = true;
   bool ready = false;
   bool showing_remote = false;
   
   uint8_t oledData[OLED_DATA_LEN];
   void clearAnnounce();
-  
+
   void drawOLEDData(uint8_t *data, size_t data_len);
-  void drawOledBanner();
+  void drawOledStatus();
   void drawOLED(uint8_t *data, size_t length);
   void drawOLEDDelta(uint8_t *data, size_t length);
   void draw7seg(uint8_t *data, size_t length);

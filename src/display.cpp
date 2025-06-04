@@ -40,7 +40,6 @@ void Driver::begin() {
   ready = true;
 
   oled_disp.drawBitmap(46, 17, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
-  drawOledBanner();
   announce("Loading...");
   oled_disp.display();
 }
@@ -52,7 +51,7 @@ void Driver::tick() {
   if ((millis() - previousMillis) >= interval) {
   previousMillis = millis();
 
-  drawOledBanner();
+  drawOledStatus();
   clearAnnounce();
 
   oled_disp.display();
@@ -67,7 +66,7 @@ void Driver::announce(const char *message) {
   }
   lastAnnounce = millis();
 
-  oled_disp.fillRect(0, 2, 100, OFFY, SH110X_BLACK);
+  oled_disp.fillRect(0, 2, 100, 14, SH110X_BLACK);
   oled_disp.setCursor(0, 2);
   oled_disp.setTextColor(SH110X_WHITE);
   oled_disp.print(message);
@@ -142,34 +141,23 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
 
 void Driver::draw7seg(uint8_t *data, size_t length) {
   if (!ready) return;
-  uint8_t subArray[] = {data[7],data[8],data[9],data[10]};
+  uint8_t digits[] = {data[7],data[8],data[9],data[10]};
   uint8_t dots = data[6];
 
-  seg7_disp.clear();
-
-  bool dot;
   uint8_t digit;
-  uint8_t * test;
-
-  for (unsigned idx = 0; idx < 4 * 7; idx++)
-  {
-    unsigned hexIdx = idx/7;
-    unsigned hexJdx = idx%7;
-  }
 
   for (unsigned idx = 0; idx < 4; idx++)
   {
+    digit = 0x00;
     for (unsigned jdx = 0; jdx < 7; jdx++)
     {
-      unsigned hexIdx = (idx*7+jdx)/8;
-      unsigned hexJdx = (idx*7+jdx)%8;
-      digit |= (subArray[idx] & (1 << jdx)) ? (1 << seg7Dict[jdx]) : 0;
+      digit |=(digits[idx] & (1 << jdx)) ? (1 << seg7Dict[jdx]) : 0;
     }
     digit |= (dots & (1 << idx)) ? (1 << 7) : 0;
-    unsigned pos = idx > 1 ? idx : idx + 1;
+    unsigned pos = idx <= 1 ? idx : idx + 1;
     seg7_disp.writeDigitRaw(pos, digit);
   }
-
+  
   // draw static display
   drawOledStatic();
 }
@@ -220,13 +208,9 @@ void Driver::drawOledStatic(){
   } // timer
 }
 
-void Driver::drawOledBanner(){
-  // const uint16_t interval_ms = 1000;
-  // static uint16_t start_ms = 0;
-  // if (millis() - start_ms < interval_ms) {
-  //   return;
-  // }
-  // start_ms += interval_ms;
+void Driver::drawOledStatus(){
+
+  static bool bobDown = false;
 
   const uint16_t interval = 1000;
   static unsigned long previousMillis = 0;
@@ -262,8 +246,7 @@ void Driver::drawSeg7Static(){
   if ((millis() - previousMillis) >= interval) {
   previousMillis = millis();
   
-  seg7_disp.clear();
-  seg7_disp.write("DLGE",4);
+  seg7_disp.write("DLGE", 4);
   } // timer
 }
 } // namespace Display
