@@ -17,17 +17,17 @@ void serial_flush_buffer()
 
 static void blinkLED(void)
 {
-    const uint16_t intervalMs = 1000;
-    static uint16_t startMs = 0;
-
+    const uint16_t interval = 500;
+    static unsigned long previousMillis = 0;
     static bool ledState = false;
-    if ( millis() - startMs < intervalMs)
-        return;
-    startMs += intervalMs;
+  
+    if ((millis() - previousMillis) >= interval) {
+    previousMillis = millis();
 
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH:LOW); 
     serial_flush_buffer();
+    }
 }
 
 /* APPLICATION STARTS HERE */

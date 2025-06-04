@@ -39,19 +39,13 @@ void Driver::begin() {
   staticFlip = false;
   ready = true;
 
-  oled_disp.drawBitmap(46, OFFY, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
+  oled_disp.drawBitmap(46, 17, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
   drawOledBanner();
   announce("Loading...");
+  oled_disp.display();
 }
 
 void Driver::tick() {
-  // const uint16_t interval_ms_displayTick = 50;
-  // static uint16_t start_ms_displayTick = 0;
-  // if (millis() - start_ms_displayTick < interval_ms_displayTick) {
-  //   return;
-  // }
-  // start_ms_displayTick += interval_ms_displayTick;
-
   const uint8_t interval = 50;
   static unsigned long previousMillis = 0;
   
@@ -60,9 +54,6 @@ void Driver::tick() {
 
   drawOledBanner();
   clearAnnounce();
-  // TODO: clear announce
-  // seg7_disp.clear();
-  // TODO: statusImage
 
   oled_disp.display();
   seg7_disp.writeDisplay();
@@ -86,22 +77,23 @@ void Driver::clearAnnounce(){
   const int announceHold = 1000;
   if (millis() - lastAnnounce >= announceHold)
   {
-    oled_disp.fillRect(0, 0, 100, 16, SH110X_BLACK);
+    oled_disp.fillRect(0, 0, 100, 14, SH110X_BLACK);
     lastAnnounce = millis();
   }
 }
+
 void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
   // use incoming data to decide what to do
-  if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
-      driver.draw7seg(data, length);
-  }
-  else if(data[3] == uint8_t{0x40}){
+  if(data[3] == uint8_t{0x40}){
     if (data[4] == uint8_t{0x01}) {
       drawOLED(data, length);
     }   
     else if (data[4] == uint8_t{0x02}) {
       drawOLEDDelta(data, length);
     }
+  }
+  else if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
+      driver.draw7seg(data, length);
   }
   else{
     return;
@@ -119,7 +111,6 @@ void Driver::drawOLED(uint8_t *data, size_t length) {
   if (unpacked_len < 0) {
     SER.printf("Hit exception, %d\n", unpacked_len);
     return;
-    //while (1) {};
   }
 
   if (unpacked_len == OLED_DATA_LEN) {
@@ -142,7 +133,6 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
   if (unpacked_len < 0) {
     SER.printf("Hit exception, %d\n", unpacked_len);
     return;
-    //while (1) {};
   }
 
   memcpy(oledData+(8*first), unpacked, 8*len);
@@ -176,13 +166,12 @@ void Driver::draw7seg(uint8_t *data, size_t length) {
       digit |= (subArray[idx] & (1 << jdx)) ? (1 << seg7Dict[jdx]) : 0;
     }
     digit |= (dots & (1 << idx)) ? (1 << 7) : 0;
-    seg7_disp.writeDigitRaw(idx+1, digit);
+    unsigned pos = idx > 1 ? idx : idx + 1;
+    seg7_disp.writeDigitRaw(pos, digit);
   }
 
   // draw static display
-  staticFlip = false;
   drawOledStatic();
-
 }
 
 void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
@@ -218,13 +207,6 @@ void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
 }
 
 void Driver::drawOledStatic(){
-  // const uint16_t interval_ms = 1000;
-  // static uint16_t start_ms = 0;
-  // if (millis() - start_ms < interval_ms) {
-  //   return;
-  // }
-  // start_ms += interval_ms;
-
   const uint16_t interval = 1000;
   static unsigned long previousMillis = 0;
   
@@ -232,8 +214,8 @@ void Driver::drawOledStatic(){
   previousMillis = millis();
   // TODO: create static/moving background for when OLED is not in use
   oled_disp.startWrite();
-  oled_disp.fillRect(0, OFFY, 124, 48, SH110X_BLACK);
-  oled_disp.drawBitmap(46, OFFY, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
+  oled_disp.fillRect(0, 17, 150, 48, SH110X_BLACK);
+  oled_disp.drawBitmap(46, 17, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
   oled_disp.endWrite();
   } // timer
 }
@@ -274,6 +256,14 @@ void Driver::drawOledBanner(){
 }
 
 void Driver::drawSeg7Static(){
-  seg7_disp.print("DLGE");
+  const uint16_t interval = 1000;
+  static unsigned long previousMillis = 0;
+  
+  if ((millis() - previousMillis) >= interval) {
+  previousMillis = millis();
+  
+  seg7_disp.clear();
+  seg7_disp.write("DLGE",4);
+  } // timer
 }
 } // namespace Display

@@ -20,9 +20,9 @@ public:
   void announce(const char *message);
 
   void handleScreenSysexMessage(uint8_t *data, size_t length);
-  void drawOLED(uint8_t *data, size_t length);
-  void drawOLEDDelta(uint8_t *data, size_t length);
-  void draw7seg(uint8_t *data, size_t length);
+  
+  void drawOledStatic();
+  void drawSeg7Static();
 
 private:
   Adafruit_SH1107 oled_disp = Adafruit_SH1107(64, 128, &Wire);
@@ -37,11 +37,13 @@ private:
   
   uint8_t oledData[OLED_DATA_LEN];
   void clearAnnounce();
+  
   void drawOLEDData(uint8_t *data, size_t data_len);
   void drawOledBanner();
-  void drawOledStatic();
-  void drawSeg7Static();
-  void idleBob();
+  void drawOLED(uint8_t *data, size_t length);
+  void drawOLEDDelta(uint8_t *data, size_t length);
+  void draw7seg(uint8_t *data, size_t length);
+  
 };
 
 extern Driver driver;

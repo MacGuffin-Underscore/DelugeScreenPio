@@ -2,8 +2,6 @@
 
 #include "rle.hpp"
 
-//#include "string.h"
-
 extern "C" {
 
 #define memset __builtin_memset

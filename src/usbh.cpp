@@ -68,15 +68,6 @@ void MidiHost::tick(){
 #pragma region Project Specific
 
 void MidiHost::requestImage() {
-    //slow the fuck down please
-    // const uint16_t interval_ms = 1000;
-    // static uint16_t start_ms = 0;
-
-    // if (millis() - start_ms < interval_ms || openMsg) {
-    //     return;
-    // }
-    // start_ms += interval_ms;
-
     const uint16_t interval = 1000;
     static unsigned long previousMillis = 0;
   
@@ -93,15 +84,7 @@ void MidiHost::requestImage() {
 }
 
 void MidiHost::requestFlip() {
-    // const uint16_t interval_ms = 500;
-    // static uint16_t start_ms = 0;
-
-    // if (millis() - start_ms < interval_ms) {
-    //     return;
-    // }
-    // start_ms += interval_ms;
-
-    const uint16_t interval = 500;
+    const uint16_t interval = 1000;
     static unsigned long previousMillis = 0;
   
     if ((millis() - previousMillis) >= interval) {
@@ -121,6 +104,7 @@ void MidiHost::requestFlip() {
 #pragma region MIDI Callbacks
 void onMidiError(int8_t errCode)
 {
+    driver.announce("error, try restarting dlge");
     SER.printf("MIDI Errors: %s %s %s\r\n", (errCode & (1UL << ErrorParse)) ? "Parse":"",
         (errCode & (1UL << ErrorActiveSensingTimeout)) ? "Active Sensing Timeout" : "",
         (errCode & (1UL << WarningSplitSysEx)) ? "Split SysEx":"");
@@ -136,7 +120,7 @@ void printAddrAndCable()
 void onSysEx(byte * array, unsigned size)
 {
     midiHost.openMsg = true;
-    // Print message:
+    // Print message, bogs down SER when not in use
     // printAddrAndCable();
     // SER.printf("SysEx:\r\n");
     // unsigned multipleOf8 = size/8;
@@ -244,6 +228,8 @@ void MidiHost::onMIDIdisconnect(uint8_t devAddr)
     // Note that listConnectedDevices() will still list the just unplugged
     //  device as connected until this function returns
     listConnectedDevices();
+    driver.drawOledStatic();
+    driver.drawSeg7Static();
 }
 #pragma endregion
 
