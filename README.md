@@ -4,6 +4,11 @@ I made this to be a cheaper alternative to getting your deluge sent for a upgrad
 
 This project is still a WIP being worked on in my free time between building synths and guitar pedals (and making music sometimes, maybe). Features such as MIDI CC encoders, more button functionality, static screens, 7segment support, etc will be added as I feel like it.  Bugs are present, I am working on them as I can.
 
+## How to Use
+Boot up the external screen before the deluge, or you may get malformed messages.  This is usually not the case unless the external screen has rebooted while the deluge stayed on.  The deluge will continue sending messages from the last run, and will cause issues with the USB PIO calls.
+
+After boot, press the "A" button to send a flip command to start the deluge sending out screen sysex.
+
 ## Bill of Materials
 For the minimal version, you only need the Feather, OLED, and headers to connect them.  Everything else is optional.
 | Part | Price | qty | Required |
