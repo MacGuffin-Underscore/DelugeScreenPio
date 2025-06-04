@@ -30,19 +30,14 @@ void tick() {
   if (buttonB_db.pressed()) buttonB = true;
   if (buttonC_db.pressed()) buttonC = true;
 
-      // Check for button presses
+    // flip display
     if (buttonA){
         buttonA = false; // debounce
+        driver.staticFlip = true;
         midiHost.requestFlip();
         driver.announce("Flipping display");
-        SER.print("now printing: ");
-        if (driver.isOled) {
-            SER.print("7 segment\r\n"); // it is flipping so opposite is true
-        }
-        else {
-            SER.print("OLED\r\n");
-        }
     }
+    // sleep mode? (draw statics only)
     else if (buttonB){
         buttonB = false; // debounce
         
@@ -50,7 +45,6 @@ void tick() {
 
         midiHost.requestImage();
     }
-    // Command screen to flip
     else if (buttonC){
         buttonC = false; // debounce
 

@@ -32,4 +32,3 @@
 #define OFFY 16
 
 // Other
-#define BLINK_RATE 500

@@ -12,7 +12,7 @@ namespace Display {
 class Driver {
 public:
   Driver() {};
-  bool isOled;
+  bool staticFlip;
 
   void begin();
   void tick();
@@ -28,15 +28,18 @@ private:
   Adafruit_SH1107 oled_disp = Adafruit_SH1107(64, 128, &Wire);
   Adafruit_7segment seg7_disp = Adafruit_7segment();
 
+  bool bobDown = false;
+  bool idle_oled = true;
+  bool idle_seg7 = true;
   bool ready = false;
   bool showing_remote = false;
-  uint8_t * last_screen;
   
   uint8_t oledData[OLED_DATA_LEN];
   void drawOLEDData(uint8_t *data, size_t data_len);
   void drawOledBanner();
   void drawOledStatic();
   void drawSeg7Static();
+  void idleBob();
 };
 
 extern Driver driver;

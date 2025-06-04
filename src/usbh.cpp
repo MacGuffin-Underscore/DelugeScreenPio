@@ -27,7 +27,7 @@ USING_NAMESPACE_MIDI
 USING_NAMESPACE_EZ_USB_MIDI_HOST
 struct mycustomsettings : public MidiHostSettingsDefault
 {
-    static const unsigned SysExMaxSize = 450; // for MIDI Library
+    static const unsigned SysExMaxSize = 600; // for MIDI Library changed to 450
     static const unsigned MidiRxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
     static const unsigned MidiTxBufsize = RPPICOMIDI_EZ_USB_MIDI_HOST_GET_BUFSIZE(SysExMaxSize);
 };
@@ -69,8 +69,8 @@ void MidiHost::tick(){
 
 void MidiHost::requestImage() {
     //slow the fuck down please
-    const uint32_t interval_ms = 1000;
-    static uint32_t start_ms = 0;
+    const uint16_t interval_ms = 1000;
+    static uint16_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms || openMsg) {
         return;
@@ -86,16 +86,14 @@ void MidiHost::requestImage() {
 }
 
 void MidiHost::requestFlip() {
-    const uint32_t interval_ms = 500;
-    static uint32_t start_ms = 0;
+    const uint16_t interval_ms = 500;
+    static uint16_t start_ms = 0;
 
     if (millis() - start_ms < interval_ms) {
         return;
     }
     start_ms += interval_ms;
 
-    uint8_t cable = 0;
-    Serial1.println("Flip requested.");
     for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
         if (intf == nullptr)
@@ -121,68 +119,26 @@ void printAddrAndCable()
     SER.printf("[%02d,%02d] ",midiDevAddr, cable);
 }
 
-void onNoteOff(Channel channel, byte note, byte velocity)
-{
-    printAddrAndCable();
-    SER.printf("C%u: Note off#%u v=%u\r\n", channel, note, velocity);
-}
-
-void onNoteOn(Channel channel, byte note, byte velocity)
-{
-    printAddrAndCable();
-    SER.printf("C%u: Note on#%u v=%u\r\n", channel, note, velocity);
-}
-
-void onPolyphonicAftertouch(Channel channel, byte note, byte amount)
-{
-    printAddrAndCable();
-    SER.printf("C%u: PAT#%u=%u\r\n", channel, note, amount);
-}
-
-void onControlChange(Channel channel, byte controller, byte value)
-{
-    printAddrAndCable();
-    SER.printf("C%u: CC#%u=%u\r\n", channel, controller, value);
-}
-
-void onProgramChange(Channel channel, byte program)
-{
-    printAddrAndCable();
-    SER.printf("C%u: Prog=%u\r\n", channel, program);
-}
-
-void onAftertouch(Channel channel, byte value)
-{
-    printAddrAndCable();
-    SER.printf("C%u: AT=%u\r\n", channel, value);
-}
-
-void onPitchBend(Channel channel, int value)
-{
-    printAddrAndCable();
-    SER.printf("C%u: PB=%d\r\n", channel, value);
-}
-
 void onSysEx(byte * array, unsigned size)
 {
     midiHost.openMsg = true;
     // Print message:
-    printAddrAndCable();
-    SER.printf("SysEx:\r\n");
-    unsigned multipleOf8 = size/8;
-    unsigned remOf8 = size % 8;
-    unsigned remIdx = 0;
-    for (unsigned idx=0; idx < multipleOf8; idx++) {
-        for (unsigned jdx = 0; jdx < 8; jdx++) {
-            SER.printf("%02x ", array[(idx*8)+jdx]);
-            remIdx++;
-        }
-        SER.printf("\r\n");
-    }
-    for (unsigned idx = 0; idx < remOf8; idx++) {
-        SER.printf("%02x ", array[remIdx+idx]);
-    }
-    SER.printf("\r\n");
+    // printAddrAndCable();
+    // SER.printf("SysEx:\r\n");
+    // unsigned multipleOf8 = size/8;
+    // unsigned remOf8 = size % 8;
+    // unsigned remIdx = 0;
+    // for (unsigned idx=0; idx < multipleOf8; idx++) {
+    //     for (unsigned jdx = 0; jdx < 8; jdx++) {
+    //         SER.printf("%02x ", array[(idx*8)+jdx]);
+    //         remIdx++;
+    //     }
+    //     SER.printf("\r\n");
+    // }
+    // for (unsigned idx = 0; idx < remOf8; idx++) {
+    //     SER.printf("%02x ", array[remIdx+idx]);
+    // }
+    // SER.printf("\r\n");
 
     // send over to display if it is a screen
     if (size >= 5 && array[2] == uint8_t{0x02}){
@@ -192,90 +148,6 @@ void onSysEx(byte * array, unsigned size)
     // TODO: add this, later...
     midiHost.openMsg = false;
 }
-
-void onSMPTEqf(byte data)
-{
-    printAddrAndCable();
-    uint8_t type = (data >> 4) & 0xF;
-    data &= 0xF;    
-    static const char* fps[4] = {"24", "25", "30DF", "30ND"};
-    switch (type) {
-        case 0: SER.printf("SMPTE FRM LS %u \r\n", data); break;
-        case 1: SER.printf("SMPTE FRM MS %u \r\n", data); break;
-        case 2: SER.printf("SMPTE SEC LS %u \r\n", data); break;
-        case 3: SER.printf("SMPTE SEC MS %u \r\n", data); break;
-        case 4: SER.printf("SMPTE MIN LS %u \r\n", data); break;
-        case 5: SER.printf("SMPTE MIN MS %u \r\n", data); break;
-        case 6: SER.printf("SMPTE HR LS %u \r\n", data); break;
-        case 7:
-            SER.printf("SMPTE HR MS %u FPS:%s\r\n", data & 0x1, fps[(data >> 1) & 3]);
-            break;
-        default:
-          SER.printf("invalid SMPTE data byte %u\r\n", data);
-          break;
-    }
-}
-
-void onSongPosition(unsigned beats)
-{
-    printAddrAndCable();
-    SER.printf("SongP=%u\r\n", beats);
-}
-
-void onSongSelect(byte songnumber)
-{
-    printAddrAndCable();
-    SER.printf("SongS#%u\r\n", songnumber);
-}
-
-void onTuneRequest()
-{
-    printAddrAndCable();
-    SER.printf("Tune\r\n");
-}
-
-void onMidiClock()
-{
-    printAddrAndCable();
-    SER.printf("Clock\r\n");
-}
-
-void onMidiStart()
-{
-    printAddrAndCable();
-    SER.printf("Start\r\n");
-}
-
-void onMidiContinue()
-{
-    printAddrAndCable();
-    SER.printf("Cont\r\n");
-}
-
-void onMidiStop()
-{
-    printAddrAndCable();
-    SER.printf("Stop\r\n");
-}
-
-void onActiveSense()
-{
-    printAddrAndCable();
-    SER.printf("ASen\r\n");
-}
-
-void onSystemReset()
-{
-    printAddrAndCable();
-    SER.printf("SysRst\r\n");
-}
-
-void onMidiTick()
-{
-    printAddrAndCable();
-    SER.printf("Tick\r\n");
-}
-
 void onMidiInWriteFail(uint8_t devAddr, uint8_t cable, bool fifoOverflow)
 {
     if (fifoOverflow)
@@ -289,26 +161,7 @@ void registerMidiInCallbacks(uint8_t midiDevAddr)
     uint8_t ncables = usbhMIDI.getNumInCables(midiDevAddr);
     for (uint8_t cable = 0; cable < ncables; cable++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, cable);
-        intf->setHandleNoteOff(onNoteOff);                      // 0x80
-        intf->setHandleNoteOn(onNoteOn);                        // 0x90
-        intf->setHandleAfterTouchPoly(onPolyphonicAftertouch);  // 0xA0
-        intf->setHandleControlChange(onControlChange);          // 0xB0
-        intf->setHandleProgramChange(onProgramChange);          // 0xC0
-        intf->setHandleAfterTouchChannel(onAftertouch);         // 0xD0
-        intf->setHandlePitchBend(onPitchBend);                  // 0xE0
         intf->setHandleSystemExclusive(onSysEx);                // 0xF0, 0xF7
-        intf->setHandleTimeCodeQuarterFrame(onSMPTEqf);         // 0xF1
-        intf->setHandleSongPosition(onSongPosition);            // 0xF2
-        intf->setHandleSongSelect(onSongSelect);                // 0xF3
-        intf->setHandleTuneRequest(onTuneRequest);              // 0xF6
-        intf->setHandleClock(onMidiClock);                      // 0xF8
-        // 0xF9 as 10ms Tick is not MIDI 1.0 standard but implemented in the Arduino MIDI Library
-        intf->setHandleTick(onMidiTick);                        // 0xF9
-        intf->setHandleStart(onMidiStart);                      // 0xFA
-        intf->setHandleContinue(onMidiContinue);                // 0xFB
-        intf->setHandleStop(onMidiStop);                        // 0xFC
-        intf->setHandleActiveSensing(onActiveSense);            // 0xFE
-        intf->setHandleSystemReset(onSystemReset);              // 0xFF
         intf->setHandleError(onMidiError);
     }
     auto dev = usbhMIDI.getDevFromDevAddr(midiDevAddr);
@@ -332,11 +185,6 @@ void unregisterMidiInCallbacks(uint8_t midiDevAddr)
         intf->disconnectCallbackFromType(AfterTouchChannel);
         intf->disconnectCallbackFromType(PitchBend);
         intf->disconnectCallbackFromType(SystemExclusive);
-        intf->disconnectCallbackFromType(TimeCodeQuarterFrame);
-        intf->disconnectCallbackFromType(SongPosition);
-        intf->disconnectCallbackFromType(SongSelect);
-        intf->disconnectCallbackFromType(TuneRequest);
-        intf->disconnectCallbackFromType(Clock);
         // 0xF9 as 10ms Tick is not MIDI 1.0 standard but implemented in the Arduino MIDI Library
         intf->disconnectCallbackFromType(Tick);
         intf->disconnectCallbackFromType(Start);

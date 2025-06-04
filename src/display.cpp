@@ -2,6 +2,7 @@
 
 #include "defs.hpp"
 #include "display.hpp"
+#include "images.hpp"
 #include "rle.hpp"
 
 using namespace std;
@@ -35,24 +36,26 @@ void Driver::begin() {
   seg7_disp.print("DLGE");
   seg7_disp.writeDisplay();
 
-  isOled = false;
+  staticFlip = false;
   ready = true;
   announce("Loading...");
 }
 
 void Driver::tick() {
-  const uint32_t interval_ms = 10;
-  static uint32_t start_ms = 0;
+  const uint16_t interval_ms = 50;
+  static uint16_t start_ms = 0;
   if (millis() - start_ms < interval_ms) {
     return;
   }
   start_ms += interval_ms;
 
-  oled_disp.display();
-
+  drawOledBanner();
   // TODO: clear announce
-
+  // seg7_disp.clear();
   // TODO: statusImage
+
+  oled_disp.display();
+  seg7_disp.writeDisplay();
 }
 
 void Driver::announce(const char *message) {
@@ -68,11 +71,6 @@ void Driver::announce(const char *message) {
 
 void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
   // use incoming data to decide what to do
-  // if (data == last_screen) {
-  //   SER.print("repeated screen");
-  //   return;
-  // }
-
   if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
       driver.draw7seg(data, length);
   }
@@ -85,10 +83,8 @@ void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
     }
   }
   else{
-    SER.print("Non-screen SYSEX MSG.\r\n");
     return;
   }
-  //last_screen = data;
 }
 
 void Driver::drawOLED(uint8_t *data, size_t length) {
@@ -140,11 +136,7 @@ void Driver::draw7seg(uint8_t *data, size_t length) {
 
   uint8_t subArray[] = {data[7],data[8],data[9],data[10]};
   uint8_t dots = data[6];
-  // draw static display
-  if (isOled){
-    isOled = false;
-    drawOledStatic();
-  }
+
   seg7_disp.clear();
 
   bool dot;
@@ -158,19 +150,15 @@ void Driver::draw7seg(uint8_t *data, size_t length) {
     digit |= (dots & (1 << idx)) ? (1 << 7) : 0;
     seg7_disp.writeDigitRaw(idx+1, digit);
   }
-  seg7_disp.writeDisplay();
+
+  // draw static display
+  staticFlip = false;
+  drawOledStatic();
+
 }
 
 void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
   if (!ready) return;
-  
-  //draw static display
-  if (!isOled) {
-    isOled = true;
-    seg7_disp.clear();
-    seg7_disp.print("DLGE");
-    seg7_disp.writeDisplay();
-  }
 
   oled_disp.startWrite();
   oled_disp.fillRect(OFFX, OFFY, OFFX+128, OFFY+48, SH110X_BLACK);
@@ -196,20 +184,58 @@ void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
   }
   oled_disp.endWrite();
   showing_remote = true;
+
+  //draw static display
+  if (staticFlip) {
+    drawSeg7Static();
+  }
 }
 
 void Driver::drawOledStatic(){
+  const uint16_t interval_ms = 1000;
+  static uint16_t start_ms = 0;
+  if (millis() - start_ms < interval_ms) {
+    return;
+  }
+  start_ms += interval_ms;
+
   // TODO: create static/moving background for when OLED is not in use
+  oled_disp.startWrite();
+  oled_disp.fillRect(0, OFFY, 124, 48, SH110X_BLACK);
+  oled_disp.drawBitmap(46, OFFY, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
+  oled_disp.endWrite();
 }
 
 void Driver::drawOledBanner(){
+  const uint16_t interval_ms = 1000;
+  static uint16_t start_ms = 0;
+  if (millis() - start_ms < interval_ms) {
+    return;
+  }
+  start_ms += interval_ms;
+
+  bobDown = !bobDown;
+
+  oled_disp.startWrite();
+
   // TODO: write battery level indicator
   // TODO: write isWorking indicator
+ 
+  // TODO: create static/moving background for when OLED is not in use
+  oled_disp.fillRect(117, 0, 11, 12, SH110X_BLACK);
+  if(bobDown){
+    oled_disp.drawBitmap(117, 2, epd_bitmap_dlge1, 11, 10, SH110X_WHITE);
+  }
+  else {
+    oled_disp.drawBitmap(117, 0, epd_bitmap_dlge1, 11, 10, SH110X_WHITE);
+  }
   // TODO: write whatever else I want on the banner
+
+  oled_disp.endWrite();
 }
 
 void Driver::drawSeg7Static(){
-
+  seg7_disp.clear();
+  seg7_disp.print("DLGE");
 }
-
 } // namespace Display

@@ -9,10 +9,16 @@
 #include "display.hpp"
 #include "usbh.hpp"
 
+void serial_flush_buffer()
+{
+  while (Serial.read() >= 0)
+   ; // do nothing
+}
+
 static void blinkLED(void)
 {
-    const uint32_t intervalMs = 1000;
-    static uint32_t startMs = 0;
+    const uint16_t intervalMs = 1000;
+    static uint16_t startMs = 0;
 
     static bool ledState = false;
     if ( millis() - startMs < intervalMs)
@@ -21,17 +27,19 @@ static void blinkLED(void)
 
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH:LOW); 
+    serial_flush_buffer();
 }
 
 /* APPLICATION STARTS HERE */
 void setup()
 {
-    SER.begin(115200);
+    SER.begin(9200); //115200
     set_sys_clock_hz(240000000UL, true); // 120Mhz for bit-banging USB
 
     while(!SER);   // wait for serial port
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(18, OUTPUT);
+
+    pinMode(18, OUTPUT); // turn on 5v output
     digitalWrite(18, HIGH);
 
     // Check for CPU frequency, must be multiple of 120Mhz for bit-banging USB
@@ -44,13 +52,13 @@ void setup()
         while(1) delay(1);
     }
     SER.print("Initializing...");
-    delay(2000);
-
+    
     // init all classes
     Battery::status.begin();
     Buttons::begin();
     Usbh::midiHost.begin();
     Display::driver.begin();
+    delay(2000);
 }
 
 void loop() {
