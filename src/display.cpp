@@ -38,37 +38,58 @@ void Driver::begin() {
 
   staticFlip = false;
   ready = true;
+
+  oled_disp.drawBitmap(46, OFFY, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
+  drawOledBanner();
   announce("Loading...");
 }
 
 void Driver::tick() {
-  const uint16_t interval_ms = 50;
-  static uint16_t start_ms = 0;
-  if (millis() - start_ms < interval_ms) {
-    return;
-  }
-  start_ms += interval_ms;
+  // const uint16_t interval_ms_displayTick = 50;
+  // static uint16_t start_ms_displayTick = 0;
+  // if (millis() - start_ms_displayTick < interval_ms_displayTick) {
+  //   return;
+  // }
+  // start_ms_displayTick += interval_ms_displayTick;
+
+  const uint8_t interval = 50;
+  static unsigned long previousMillis = 0;
+  
+  if ((millis() - previousMillis) >= interval) {
+  previousMillis = millis();
 
   drawOledBanner();
+  clearAnnounce();
   // TODO: clear announce
   // seg7_disp.clear();
   // TODO: statusImage
 
   oled_disp.display();
   seg7_disp.writeDisplay();
+
+  } // timer
 }
 
 void Driver::announce(const char *message) {
   if (!ready) {
     return;
   }
+  lastAnnounce = millis();
 
-  oled_disp.fillRect(0, 2, 127, OFFY, SH110X_BLACK);
+  oled_disp.fillRect(0, 2, 100, OFFY, SH110X_BLACK);
   oled_disp.setCursor(0, 2);
   oled_disp.setTextColor(SH110X_WHITE);
   oled_disp.print(message);
 }
 
+void Driver::clearAnnounce(){
+  const int announceHold = 1000;
+  if (millis() - lastAnnounce >= announceHold)
+  {
+    oled_disp.fillRect(0, 0, 100, 16, SH110X_BLACK);
+    lastAnnounce = millis();
+  }
+}
 void Driver::handleScreenSysexMessage(uint8_t *data, size_t length){
   // use incoming data to decide what to do
   if (data[3] == uint8_t{0x41} && data[4] == uint8_t{0x00}){
@@ -131,9 +152,6 @@ void Driver::drawOLEDDelta(uint8_t *data, size_t length) {
 
 void Driver::draw7seg(uint8_t *data, size_t length) {
   if (!ready) return;
-
-  SER.print("Drawing SEG7\r\n");
-
   uint8_t subArray[] = {data[7],data[8],data[9],data[10]};
   uint8_t dots = data[6];
 
@@ -141,10 +159,20 @@ void Driver::draw7seg(uint8_t *data, size_t length) {
 
   bool dot;
   uint8_t digit;
+  uint8_t * test;
+
+  for (unsigned idx = 0; idx < 4 * 7; idx++)
+  {
+    unsigned hexIdx = idx/7;
+    unsigned hexJdx = idx%7;
+  }
+
   for (unsigned idx = 0; idx < 4; idx++)
   {
     for (unsigned jdx = 0; jdx < 7; jdx++)
     {
+      unsigned hexIdx = (idx*7+jdx)/8;
+      unsigned hexJdx = (idx*7+jdx)%8;
       digit |= (subArray[idx] & (1 << jdx)) ? (1 << seg7Dict[jdx]) : 0;
     }
     digit |= (dots & (1 << idx)) ? (1 << 7) : 0;
@@ -186,33 +214,43 @@ void Driver::drawOLEDData(uint8_t *data, size_t data_len) {
   showing_remote = true;
 
   //draw static display
-  if (staticFlip) {
-    drawSeg7Static();
-  }
+  drawSeg7Static();
 }
 
 void Driver::drawOledStatic(){
-  const uint16_t interval_ms = 1000;
-  static uint16_t start_ms = 0;
-  if (millis() - start_ms < interval_ms) {
-    return;
-  }
-  start_ms += interval_ms;
+  // const uint16_t interval_ms = 1000;
+  // static uint16_t start_ms = 0;
+  // if (millis() - start_ms < interval_ms) {
+  //   return;
+  // }
+  // start_ms += interval_ms;
 
+  const uint16_t interval = 1000;
+  static unsigned long previousMillis = 0;
+  
+  if ((millis() - previousMillis) >= interval) {
+  previousMillis = millis();
   // TODO: create static/moving background for when OLED is not in use
   oled_disp.startWrite();
   oled_disp.fillRect(0, OFFY, 124, 48, SH110X_BLACK);
   oled_disp.drawBitmap(46, OFFY, epd_bitmap_dlge3, 33, 30, SH110X_WHITE);
   oled_disp.endWrite();
+  } // timer
 }
 
 void Driver::drawOledBanner(){
-  const uint16_t interval_ms = 1000;
-  static uint16_t start_ms = 0;
-  if (millis() - start_ms < interval_ms) {
-    return;
-  }
-  start_ms += interval_ms;
+  // const uint16_t interval_ms = 1000;
+  // static uint16_t start_ms = 0;
+  // if (millis() - start_ms < interval_ms) {
+  //   return;
+  // }
+  // start_ms += interval_ms;
+
+  const uint16_t interval = 1000;
+  static unsigned long previousMillis = 0;
+  
+  if ((millis() - previousMillis) >= interval) {
+  previousMillis = millis();
 
   bobDown = !bobDown;
 
@@ -232,10 +270,10 @@ void Driver::drawOledBanner(){
   // TODO: write whatever else I want on the banner
 
   oled_disp.endWrite();
+  }// timer
 }
 
 void Driver::drawSeg7Static(){
-  seg7_disp.clear();
   seg7_disp.print("DLGE");
 }
 } // namespace Display

@@ -15,12 +15,13 @@ void Status::begin(){
 }
 
 void Status::tick(){
-    const uint16_t interval_ms = 5000;
-    static uint16_t start_ms = 0;
+    const uint16_t interval = 5000;
+    static unsigned long previousMillis = 0;
+  
+    if ((millis() - previousMillis) >= interval) {
+    previousMillis = millis();
 
-    if (millis() - start_ms < interval_ms) {
-        return;
-    }
-    start_ms += interval_ms;
+
+    } // timer
 }
 } // namespace Battery

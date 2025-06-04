@@ -69,30 +69,43 @@ void MidiHost::tick(){
 
 void MidiHost::requestImage() {
     //slow the fuck down please
-    const uint16_t interval_ms = 1000;
-    static uint16_t start_ms = 0;
+    // const uint16_t interval_ms = 1000;
+    // static uint16_t start_ms = 0;
 
-    if (millis() - start_ms < interval_ms || openMsg) {
-        return;
-    }
-    start_ms += interval_ms;
+    // if (millis() - start_ms < interval_ms || openMsg) {
+    //     return;
+    // }
+    // start_ms += interval_ms;
 
-  for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
+    const uint16_t interval = 1000;
+    static unsigned long previousMillis = 0;
+  
+    if ((millis() - previousMillis) >= interval) {
+    previousMillis = millis();
+
+    for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
         if (intf == nullptr)
             continue; // not connected
         intf->sendSysEx(6, sysex_get_display, true);
-  }
+    }
+    } // timer
 }
 
 void MidiHost::requestFlip() {
-    const uint16_t interval_ms = 500;
-    static uint16_t start_ms = 0;
+    // const uint16_t interval_ms = 500;
+    // static uint16_t start_ms = 0;
 
-    if (millis() - start_ms < interval_ms) {
-        return;
-    }
-    start_ms += interval_ms;
+    // if (millis() - start_ms < interval_ms) {
+    //     return;
+    // }
+    // start_ms += interval_ms;
+
+    const uint16_t interval = 500;
+    static unsigned long previousMillis = 0;
+  
+    if ((millis() - previousMillis) >= interval) {
+    previousMillis = millis();
 
     for (uint8_t midiDevAddr = 1; midiDevAddr <= RPPICOMIDI_TUH_MIDI_MAX_DEV; midiDevAddr++) {
         auto intf = usbhMIDI.getInterfaceFromDeviceAndCable(midiDevAddr, usbhMIDI.getNumOutCables(midiDevAddr)-1);
@@ -100,6 +113,7 @@ void MidiHost::requestFlip() {
             continue; // not connected
         intf->sendSysEx(6, sysex_flip_screen, true);
     }
+    } // timer
 }
 
 #pragma endregion
