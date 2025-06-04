@@ -2,7 +2,7 @@
 ### A slightly cheaper alternative, with some extra features
 I made this to be a cheaper alternative to getting your deluge sent for a upgrade.  Even if I already paid for it. It uses the USB port of a USBA host feather to handle midi with PIO, and takes power from the USB C to charge the deluge/onboard battery.
 
-Still a WIP, so features such as MIDI CC encoders, more button functionality, static screens, 7segment support, etc will be added as I feel like it.
+This project is still a WIP being worked on in my free time between building synths and guitar pedals (and making music sometimes, maybe). Features such as MIDI CC encoders, more button functionality, static screens, 7segment support, etc will be added as I feel like it.  Bugs are present, I am working on them as I can.
 
 ## Bill of Materials
 For the minimal version, you only need the Feather, OLED, and headers to connect them.  Everything else is optional.
@@ -27,7 +27,7 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 **** WARNING: This battery's connections are backwards for adafruit boards, if you buy this one you will have to switch the red and black wires in the JST connector or it will fry your board.  Always check polarity before plugging in.
 
 ## Known Bugs
-Code is still freezing up after a time. It may be leaking memory somewhere.  I am tracking it down now and hopefully will have this bug fixed before anyone builds it :p
+Code is still freezing up after a time. Seems to be a problem with EZ_USB_MIDI_HOST library with serial output.  Serial2 seems to be stable enough, though I don't have a debug probe so I will be testing on serial still.
 
 ## Planned Features
 - 7 Segment display support
@@ -36,7 +36,3 @@ Code is still freezing up after a time. It may be leaking memory somewhere.  I a
 - Battery indicator
 
 If you have ideas, please suggest away!
-
-## Give me money
-(I really don't need it)
-https://ko-fi.com/macguffin
