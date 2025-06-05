@@ -45,3 +45,5 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 - Battery indicator
 
 If you have ideas, please suggest away!
+
+[my ko-fi](https://ko-fi.com/macguffin)
