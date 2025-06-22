@@ -33,7 +33,7 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 
 ## Known Issues
 - Idle screens have no way to know when to come back after flipping properly
-- Code freezing seems to be fixed, but I know I just jinxed it
+- Code sometimes freezes, I think its a timer overrun somewhere
 - 7 segment decoding is broken, I haven't sat down to actually figure it out properly
 - Could be way more efficient with re-drawing static displays, but it's good for now
 - Some dead code needs removal
