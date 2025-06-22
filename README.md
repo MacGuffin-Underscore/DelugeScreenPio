@@ -2,7 +2,7 @@
 ### A slightly cheaper alternative, with some extra features
 I made this to be a cheaper alternative to getting your deluge sent for a upgrade.  Even if I already paid for it. It uses the USB port of a USBA host feather to handle midi with PIO, and takes power from the USB C to charge the deluge/onboard battery.
 
-This project is still a WIP being worked on in my free time between building synths and guitar pedals (and making music sometimes, maybe). Features such as MIDI CC encoders, more button functionality, static screens, 7segment support, etc will be added as I feel like it.  Bugs are present, I am working on them as I can.
+This project is still a WIP being worked on in my free time between building synths and guitar pedals (and making music sometimes, maybe). Features such as MIDI CC encoders, more button functionality, etc will be added as I feel like it.  Bugs are present, I am working on them as I can.
 
 Credit to @litui and @bfredl for the base code I built this off of
 
