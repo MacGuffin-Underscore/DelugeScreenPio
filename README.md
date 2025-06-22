@@ -4,6 +4,8 @@ I made this to be a cheaper alternative to getting your deluge sent for a upgrad
 
 This project is still a WIP being worked on in my free time between building synths and guitar pedals (and making music sometimes, maybe). Features such as MIDI CC encoders, more button functionality, static screens, 7segment support, etc will be added as I feel like it.  Bugs are present, I am working on them as I can.
 
+Credit to @litui and @bfredl for the base code I built this off of
+
 ## How to Use
 Boot up the external screen before the deluge, or you may get malformed messages.  This is usually not the case unless the external screen has rebooted while the deluge stayed on.  The deluge will continue sending messages from the last run, and will cause issues with the USB PIO calls.
 
