@@ -37,11 +37,10 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 - 7 segment decoding is broken, I haven't sat down to actually figure it out properly
 - Could be way more efficient with re-drawing static displays, but it's good for now
 - Some dead code needs removal
+- Idle screen for 7seg refuses to return after being updated once
 
 ## Planned Features
-- 7 Segment display support
 - Encoder MIDI CC support
-- Static screens for the unused display
 - Battery indicator
 
 If you have ideas, please suggest away!
