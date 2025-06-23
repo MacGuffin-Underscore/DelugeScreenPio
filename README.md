@@ -20,7 +20,7 @@ For the minimal version, you only need the Feather, OLED, and headers to connect
 | [Header Kit for Feather](https://www.adafruit.com/product/2886)             |  $0.95 |   1 |   Y |
 | [JST-PH 2-pin Jumper Cable](https://www.adafruit.com/product/4714)          |  $0.95 |   1 |   N |
 | [Adafruit MAX17048 Fuel Gauge](https://www.adafruit.com/product/4650)       |  $5.95 |   1 |   N |
-| [STEMMA QT Cable](https://www.adafruit.com/product/4399)                    |  $0.95 |   4 |   N |
+| [STEMMA QT Cable](https://www.adafruit.com/product/4399)                    |  $0.95 |   3 |   N |
 | [Adafruit 0.56" 7-Segment Display](https://www.adafruit.com/product/1002)   | $10.95 |   1 |   N |
 | [Adafruit I2C Quad Encoder](https://www.adafruit.com/product/2886)          |  $7.50 |   2 |   N |
 | [Encoders With Button**](https://www.amazon.com//dp/B07MW7D4FD)             |  $1.00 |   8 |   N |
